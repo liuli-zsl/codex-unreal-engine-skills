@@ -1,0 +1,454 @@
+--- upstream/skills/create-toolset/SKILL.md
++++ desktop/skills/create-toolset/SKILL.md
+@@ -1,11 +1,28 @@
+ ---
+ name: create-toolset
+-description: "Use this skill when authoring or extending an Unreal Engine toolset, a class of static, AI-callable functions registered with `ToolsetRegistry` and exposed through the unreal-mcp server. Trigger when the user wants to add, expose, or register a new tool method, create a new toolset, or extend an existing one such as `BlueprintTools`, `StaticMeshTools`, `ObjectTools`, `LevelTools`, or `MaterialTools`. Concrete triggers: 'add a tool to X', 'expose this via MCP', 'register a function so Claude/the agent can call it', 'wire this into the toolset registry', 'create a new toolset for Y', 'add a Python toolset', 'make this AI-callable'; adding a `static` method to a `*Tools.cpp/.h/.py` file; editing files under a `Toolsets/` folder; designing tool parameters, return types, or struct schemas for a toolset. SKIP for: invoking existing tools at runtime (use unreal-mcp instead), authoring an Agent Skill (use unreal-skill), generic refactors that happen to touch a toolset file but don't add or redesign a tool, or unrelated uses of the word 'toolset'."
++description: "Create or extend Unreal Engine ToolsetRegistry tools in C++ or Python. Use when exposing a new MCP operation or changing a tool API; skip simply invoking existing editor tools."
+ ---
+ 
+ # Create Toolset
+ 
+-You are authoring or extending an Unreal Engine toolset: a collection of static, AI-callable functions registered with the `ToolsetRegistry` and exposed through the MCP server. The goal is to expand the surface of things Claude can do inside the editor.
++## Desktop adaptation and authorization
++
++Explicit user instructions take precedence over this skill. Use the already
++configured Unreal MCP connection for live queries and inspect its actual schema.
++Resolve its endpoint from existing configuration; do not assume the bundled
++first-setup default matches a running editor. Serialize live calls.
++
++Do not execute Build, compilation, Live Coding, or a test/script that triggers
++compilation without explicit user authorization covering that operation. An edit
++request alone does not grant it. Reuse authorization already given within scope.
++Compilation/testing guidance below applies after the relevant authorization.
++
++Preserve existing user work. A scoped request to create or edit a tool or skill
++authorizes that requested work; do not add repeated confirmation steps for it.
++Ask only when a missing decision materially changes scope or risk. Distinguish
++source inspection, compilation, and actual editor/runtime verification.
++
++You are authoring or extending an Unreal Engine toolset: a collection of static, AI-callable functions registered with the `ToolsetRegistry` and exposed through the MCP server. The goal is to expand the surface of things the assistant can do inside the editor.
+ 
+ ## Principles
+ 
+@@ -31,12 +48,12 @@
+ 
+ **4. Does a new toolset need its own plugin?** If you're creating a new toolset and it's closely related to an existing plugin, add it there. If it's a distinct enough domain, it may warrant its own plugin. Ask the user if it isn't obvious.
+ 
+-**5. Choose the implementation language.** This is the user's call, but help them make an informed one. Python is generally preferred: it's faster to iterate and easier to change. Assess both options:
++**5. Choose the implementation language.** Honor the user's choice or the existing owning module's implementation; otherwise assess both options. Python is generally preferred: it's faster to iterate and easier to change. Assess both options:
+ 
+ - **Python**: Check what's available in the Python stubs (`<project_root>/Intermediate/PythonStub/unreal.py`; search it, don't read it wholesale). If the file doesn't exist, the user needs to enable **Developer Mode** in **Edit → Project Settings → Plugins → Python** and restart the editor. This is worth doing for any toolset work, so recommend it proactively. If the necessary APIs are all there, Python is the right choice. If most of the functionality is available but something small is missing, flag the gap to the user; a minor engine tweak may still make Python the better option overall.
+ - **C++**: The right choice when Python coverage is thin or non-existent. Most of what you need simply isn't in the stubs.
+ 
+-Summarize what's available in each and let the user decide before writing any code. If the APIs needed aren't available in either language, don't work around it. Stop and tell the user so they can extend the engine. Workarounds create fragile tools that break silently.
++Summarize the tradeoff and follow the user's stated choice or the existing project pattern. Ask before writing only when the remaining choice materially changes the task scope. If the APIs needed aren't available in either language, don't work around it. Stop and tell the user so they can extend the engine. Workarounds create fragile tools that break silently.
+ 
+ ## Shared Conventions
+ 
+@@ -231,7 +248,7 @@
+ 
+ ### Tests
+ 
+-Before running tests, compile your changes with `LiveCodingToolset.CompileLiveCoding`. It blocks until done and surfaces MSVC diagnostics. Fix any compile errors before proceeding.
++After compilation has been explicitly authorized, discover the available Live Coding toolset and compile your changes with its actual advertised tool. It blocks until done and surfaces MSVC diagnostics. Fix any compile errors before proceeding.
+ 
+ Every tool needs test coverage for both the success path and every error path. Write at least one test that confirms the tool does what it says, and a separate test for each condition that raises. Use the `BEGIN_DEFINE_SPEC` / `END_DEFINE_SPEC` pattern. Read existing tests in `Plugins/Experimental/Toolsets` for reference. Place tests near the toolset and follow the convention in the same plugin:
+ 
+@@ -379,7 +396,7 @@
+ 
+ ## Testing Your Work
+ 
+-Tests are how you verify the toolset actually works and catch regressions when things change. Work in a tight loop: write code, compile if needed, run the tests, read the failures, fix them, and repeat until everything passes.
++Tests are how you verify the toolset actually works and catch regressions when things change. Work in a tight loop: write code, obtain any required compilation authorization, compile if needed, run authorized tests, read the failures, fix them, and repeat until everything passes.
+ 
+ ### Live Editor (preferred)
+ 
+--- upstream/skills/unreal-mcp/references/operations.md
++++ desktop/skills/unreal-mcp/references/operations.md
+@@ -4,7 +4,7 @@
+ 
+ ## Console commands
+ 
+-Run these from the Unreal Editor console (`~`).
++Run these from the Unreal Editor console (`~`) only when the task authorizes server changes. Resolve the intended editor's actual port from its current settings and logs, then pass it explicitly to `ModelContextProtocol.StartServer <port>`. Do not assume the first-setup default matches a custom configuration or restart an already working server.
+ 
+ | Command                                              | Use it for                                                                                               |
+ |------------------------------------------------------|----------------------------------------------------------------------------------------------------------|
+@@ -34,18 +34,18 @@
+ - `unreal_mcp_status` reports whether the proxy holds an initialized upstream session. It does not test current reachability.
+ - Visible tools can come from a stored catalog. Verify live access with a read-only Unreal tool call.
+ - With no stored catalog and no upstream session, the proxy exposes only `unreal_mcp_status`. After recovery, it sends `notifications/tools/list_changed`.
+-- Clients must fetch `tools/list` again after that notification. A client that ignores it can keep the status-only catalog, or an older cached catalog. Once Unreal is reachable, use the client's reconnect or configuration-reload action if available. Otherwise, restart the client to obtain the catalog. This is a client refresh limitation, not the normal proxy recovery workflow.
++- Clients must fetch `tools/list` again after that notification. A client that ignores it can keep the status-only catalog, or an older cached catalog. Once Unreal is reachable, use the desktop client's reconnect or configuration-reload action if available. Otherwise, restart the client to obtain the catalog. This is a client refresh limitation, not the normal proxy recovery workflow.
+ - Killing the proxy closes the client's STDIO connection. `Transport closed` then needs client reconnection; starting an unrelated proxy process cannot repair that connection. Ask before stopping active proxies.
+ 
+-If calls still fail, check the editor's MCP startup log, the configured endpoint, and proxy stderr. With multiple editors, identify which process owns the configured port. A running editor alone does not prove that the proxy targets its MCP server. Follow the recorded `.mcp.json` entry and the engine's `Extras/Proxy/README.md` for your build's transport limits.
++If calls still fail, check the editor's MCP startup log, the configured endpoint, and proxy stderr. With multiple editors, identify which process owns the configured port. A running editor alone does not prove that the proxy targets its MCP server. Follow the actual installed plugin or client configuration entry and the engine's `Extras/Proxy/README.md` for your build's transport limits.
+ 
+ ## Troubleshooting matrix
+ 
+ | Symptom                                               | What to do                                                                                                                                                                                                                                                                                                          |
+ |-------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+ | Unreal tools are missing, or `list_toolsets` errors | Check for both `unreal-mcp` and `unreal-mcp-proxy` in the client configuration. Check the editor's MCP startup log and configured endpoint. For a proxy connection, follow **Proxy recovery** above before concluding that the editor is stopped. |
+-| Editor logs "Failed to listen on port"                | Another process holds the default port. Change `ServerPortNumber` in the per-user `EditorPerProjectUserSettings.ini` (see `setup.md`), or pass `-ModelContextProtocolPort=<port>` on the next launch; restart the editor, and re-run `ModelContextProtocol.GenerateClientConfig ClaudeCode` to refresh `.mcp.json`. |
++| Editor logs "Failed to listen on port"                | Another process holds the default port. Change `ServerPortNumber` in the per-user `EditorPerProjectUserSettings.ini` (see `setup.md`), or pass `-ModelContextProtocolPort=<port>` on the next launch; restart the editor, and update only the relevant plugin/client endpoint if it changed; do not overwrite unrelated client settings. |
+ | A toolset you expect (e.g. `NiagaraTools`) is missing | Run `ModelContextProtocol.RefreshTools`. If still missing, the toolset's plugin may not be enabled in the `.uproject`. Check there.                                                                                                                                                                                 |
+-| Tool calls hang or return errors                      | Editor may be busy compiling, loading a level, or in PIE. Wait and retry. For long compiles, prefer `LiveCodingToolset.CompileLiveCoding`. It returns when the compile actually finishes.                                                                                                                           |
+-| `AIAssistantToolset.GetDockedContext` returns empty   | The Claude Code tab must be docked inside an asset editor (Blueprint, Material, etc.) to provide docked context. If undocked, that tool has nothing to report.                                                                                                                                                      |
+-| Concurrent tool calls produce conflicting results     | MCP accepts concurrent requests and handles dispatch synchronization. Serialize dependent calls and mutations that affect the same state. Use parallel calls only for independent work when the tools support safe overlap.                                                                                         |
++| Tool calls hang or return errors                      | Editor may be busy compiling, loading a level, or in PIE. Wait and retry. Do not start compilation without explicit authorization. Once authorized, discover the available compilation tool and wait for its actual result.                                                                                                                           |
++| `AIAssistantToolset.GetDockedContext` returns empty   | This tool relies on a compatible agent tab docked inside an Unreal asset editor (Blueprint, Material, etc.) to provide docked context. If undocked, that tool has nothing to report.                                                                                                                                                      |
++| Concurrent tool calls produce conflicting results     | Serialize this adaptation's live UE calls and inspect each result before the next request, especially when editor state or assets overlap.                                                                                         |
+--- upstream/skills/unreal-mcp/references/setup.md
++++ desktop/skills/unreal-mcp/references/setup.md
+@@ -1,133 +1,95 @@
+-# First-Time MCP Server Setup
++# ChatGPT Desktop Setup for Unreal MCP
+ 
+-Read this for first-time MCP configuration or optional proxy installation. Steps 1-3 configure direct HTTP access. Step 4 adds a proxy that keeps the client session open while Unreal is unavailable.
++Use this reference only when setup or connection recovery is part of the task.
++Inspect the current working configuration before changing anything. Keep an
++already functioning connection and user-specified endpoint.
+ 
+-The goal is three things:
+-1. Enable the `ModelContextProtocol` and `AllToolsets` plugins in the project.
+-2. Make the editor auto-start the MCP server on launch.
+-3. Generate the `.mcp.json` Claude Code reads to connect.
++## 1. Confirm the target project and executor
+ 
+-Walk the user through them in order. Do not skip the user's `.uproject` edit silently. Confirm the file path first.
++Identify the intended `.uproject` and use This computer / Local. For launcher
++projects the root contains the `.uproject`; source engine workspaces may have
++`GenerateProjectFiles.bat`, `.sh`, or `.command`. A bare `Engine` folder alone is
++not a reliable root marker. Do not edit an unrelated project.
+ 
+-## 1. Enable the plugins in the `.uproject`
++## 2. Enable the server and tools
+ 
+-Two plugins are required. `ModelContextProtocol` is the server and transport; `AllToolsets` provides the tools. With only `ModelContextProtocol` enabled the server starts but exposes no tools.
++In UE 5.8, enable `Unreal MCP` (`ModelContextProtocol`) and `All Toolsets`
++(`AllToolsets`) through Edit > Plugins. Individual toolset plugins may replace
++the aggregate when a narrower surface is wanted. The registry dependency is
++enabled automatically. Restart only as part of an authorized setup action.
+ 
+-Open the project's `.uproject` file. In the `Plugins` array, ensure both entries:
++Inspect and preserve existing `.uproject` entries if editing the file directly.
++Enabling only the transport does not guarantee the required toolsets are loaded.
+ 
+-```json
+-{
+-  "Name": "ModelContextProtocol",
+-  "Enabled": true
+-},
+-{
+-  "Name": "AllToolsets",
+-  "Enabled": true
+-}
+-```
++## 3. Start the intended endpoint
+ 
+-If the array doesn't exist, create it. If either entry exists with `"Enabled": false`, flip it to `true`.
+-
+-`AllToolsets` is an editor-only aggregator with `EnabledByDefault` off, so it must be enabled explicitly. To expose only a subset of tools, enable the specific toolset plugins you want instead of `AllToolsets`.
+-
+-## 2. Enable auto-start
+-
+-The default is for the MCP server to stay stopped. To start it manually in a session, run `ModelContextProtocol.StartServer` from the editor console.
+-
+-To start it automatically on every editor launch, add the snippet below to the per-user editor config file:
+-
+-`<Project>/Saved/Config/<Platform>Editor/EditorPerProjectUserSettings.ini`
+-
+-This is the file the editor writes when you toggle the setting in Editor Preferences. It is per-user and not source-controlled.
++Read the intended editor's existing settings and startup logs first. Preserve
++its port and URL path. For a new setup only, UE's official defaults are:
+ 
+ ```ini
+ [/Script/ModelContextProtocolEngine.ModelContextProtocolSettings]
+ bAutoStartServer=True
+-```
+-
+-Optional overrides if the defaults conflict with another local service:
+-
+-```ini
+ ServerPortNumber=8000
+ ServerUrlPath=/mcp
+ ```
+ 
+-A command-line alternative also works: pass `-ModelContextProtocolStartServer` (and optionally `-ModelContextProtocolPort=<port>`) to the editor. Prefer the `.ini` because it's persistent.
++Per-user settings normally live in
++`<Project>/Saved/Config/<Platform>Editor/EditorPerProjectUserSettings.ini`.
++Prefer the editor UI while it is running; do not overwrite its active settings.
+ 
+-## 3. Generate `.mcp.json`
++When manual startup is actually needed, use the UE console and substitute the
++intended editor's actual configured port for `<port>`; do not enter the angle
++brackets literally:
+ 
+-The editor does not write `.mcp.json` on its own. Either run a console command from inside the editor, or hand-write the file.
+-
+-**From a running editor (preferred):** run `ModelContextProtocol.GenerateClientConfig ClaudeCode` in the console (or `All` to write configs for every supported client: `ClaudeCode`, `Cursor`, `VSCode`, `Gemini`, `Codex`). Re-running merges into the existing JSON, so it is safe after changing the port or URL. Codex is the exception: it uses TOML and the writer refuses to overwrite an existing `.codex/config.toml`. Edit that one by hand if it already exists.
+-
+-The destination depends on the build kind:
+-
+-- **Source build** (your repo contains `Engine/`): the file is written to the workspace root, alongside `Engine/`. Not next to the `.uproject`.
+-- **Installed/launcher build**: the file is written next to the `.uproject`.
+-
+-**Without launching the editor first** (for example, scripting a fresh-project bootstrap), hand-write `.mcp.json` at the location matching your build kind above:
+-
+-```json
+-{
+-  "mcpServers": {
+-    "unreal-mcp": {
+-      "type": "http",
+-      "url": "http://127.0.0.1:8000/mcp"
+-    }
+-  }
+-}
++```text
++ModelContextProtocol.StartServer <port>
+ ```
+ 
+-Adjust the URL if the port or path was overridden in step 2.
++A no-argument start command may use the API default instead of a custom editor
++port. Starting again can stop an existing MCP instance first. Use an explicit
++port derived from the current configuration, and do not restart a working server
++merely to follow this setup guide. Check the installed engine version's behavior
++when diagnosing a discrepancy.
+ 
+-## 4. Optional: install the proxy
++## 4. Connect the desktop client
+ 
+-Use this option if you want the client session to survive editor shutdown and startup. The editor must still run for live tool calls.
++The portable plugin's root `mcp.json` declares a Streamable HTTP connection using
++UE's official first-setup default `http://127.0.0.1:8000/mcp`. This is a configurable
++example, not an automatic discovery result. Prefer an already configured working
++Unreal connection. For a custom endpoint, update the plugin connection and its
++skill dependency metadata together before installation or configuration refresh.
++Do not silently disable or duplicate a working user-level connection. If the host
++shows both, use one explicitly; removing a duplicate is a user-directed action.
+ 
+-Check whether your engine includes `Engine/Plugins/Experimental/ModelContextProtocol/Extras/Proxy`. If it is absent, keep the direct HTTP setup.
++If the host requires direct configuration, its Settings > MCP servers > Add
++server supports Streamable HTTP with the same URL. The local UE server has no
++token authentication by default. Keep it on loopback.
+ 
+-Choose the binary for the operating system where the MCP client runs:
++Codex local clients use `config.toml`; Claude `.mcp.json` instructions are not a
++replacement. `ModelContextProtocol.GenerateClientConfig Codex` is optional and
++is not needed when the plugin or existing client configuration already works.
++The engine writer can refuse to overwrite an existing TOML file. Inspect and
++merge only requested entries; never delete unrelated configuration to force it.
+ 
+-| Platform | Binary under `Extras/Proxy` |
+-|---|---|
+-| Windows x64 | `Bin/Win64/unreal_mcp_proxy.exe` |
+-| macOS arm64 | `Bin/Mac/unreal_mcp_proxy` |
+-| Linux x64 | `Bin/Linux/unreal_mcp_proxy` |
+-| Linux arm64 | `Bin/LinuxArm64/unreal_mcp_proxy` |
++## 5. Verify the actual state
+ 
+-First generate `.mcp.json` through step 3. Then run the matching command from `Extras/Proxy`, using the actual configuration path.
++1. Check UE's `LogModelContextProtocol` and `LogHttpListener` output for startup
++   and successful binding on the intended port.
++2. Reconnect the desktop client when a changed connection requires it.
++3. Discover the MCP tools and perform a read-only Unreal domain call, such as
++   `GetSelectedActors` after reading its live schema.
++4. Report an empty result as no selected actors, not a connection error.
+ 
+-Windows PowerShell:
++A TCP connection or HTTP response (including 404) does not establish MCP
++initialization. An initialized session or cached tool list alone does not prove
++that an editor domain call can currently execute.
+ 
+-```powershell
+-.\Bin\Win64\unreal_mcp_proxy.exe --mcp-json "C:\path\to\.mcp.json" install
+-```
++## Optional proxy
+ 
+-macOS:
+-
+-```bash
+-./Bin/Mac/unreal_mcp_proxy --mcp-json "/path/to/.mcp.json" install
+-```
+-
+-For Linux, use `Bin/Linux` or `Bin/LinuxArm64` instead of `Bin/Mac`.
+-An explicit `--mcp-json` path also supports projects outside the engine directory tree.
+-
+-The installer replaces the HTTP entry with a STDIO `unreal-mcp-proxy` entry. It keeps the original entry under `_upstreamEntry`. Configure one Unreal connection, not both the proxy and a duplicate direct HTTP connection.
+-
+-Restart the MCP client once after installation so it loads the changed configuration. Later editor shutdowns do not require stopping the proxy. If an editor integration automatically replaces `.mcp.json`, disable that integration's automatic client-configuration writes.
+-
+-To restore the direct HTTP entry, run the same command with `uninstall` instead of `install`. Reload the client configuration afterward.
+-
+-The proxy stores catalogs in the operating system's user cache directory. Scope includes configuration path, proxy path, engine build identity, and client protocol version. It does not supply a fixed Unreal tool catalog. See the engine's `Extras/Proxy/README.md` for cache behavior and transport limits in your build.
+-
+-## Verifying
+-
+-After the editor is running with the plugin enabled and auto-start on:
+-
+-- The Output Log shows MCP server startup messages.
+-- `list_toolsets` (one of the three tool-search meta-tools) returns successfully.
+-- `/mcp` in Claude Code lists `unreal-mcp`, or `unreal-mcp-proxy` when installed, as connected.
+-
+-A connected proxy or visible cached tools do not prove that Unreal is reachable. Confirm with a successful read-only Unreal tool call.
+-
+-If any of these fail, see `operations.md` for recovery commands.
++The upstream supports a proxy when the engine ships
++`Engine/Plugins/Experimental/ModelContextProtocol/Extras/Proxy`. This adaptation
++does not install it or change the direct HTTP connection automatically. If the
++user requests it, inspect that engine version's README and client-format support
++first. Do not assume a legacy `--mcp-json` installer accepts portable `mcp.json`
++or writes Codex TOML correctly. See [operations.md](operations.md) for recovery
++semantics and the [upstream setup reference](https://github.com/EpicGames/unreal-engine-skills-for-claude-code-plugin/blob/main/skills/unreal-mcp/references/setup.md).
+--- upstream/skills/unreal-mcp/SKILL.md
++++ desktop/skills/unreal-mcp/SKILL.md
+@@ -1,56 +1,82 @@
+ ---
+ name: unreal-mcp
+-description: "Use this skill to perform actions inside an Unreal Engine project via a live-editor MCP connection. Trigger when the user wants to change, query, or run something in their Unreal Engine project, not for conceptual or docs questions. Concrete triggers: spawn/move/duplicate/transform actors in a level, open a `.uproject`, add things around a PlayerStart, create or edit a Blueprint/Widget/Material/Niagara/Control Rig/Sequencer/Behavior Tree/GAS ability, read or write properties on actors (e.g. `bIsLocked` on `BP_DoorActor`), Live Coding recompile after editing C++ (`AActor`, `UMyComponent::Method`, `UPROPERTY`), or modify Static/Skeletal Mesh assets. Treat as Unreal context even without the word \"Unreal\": asset prefixes `BP_`, `WBP_`, `M_`, `MI_`, `NS_`, `CR_`, `SK_`, `SM_`, `ABP_`; UE C++ types/macros; `.uproject`; Content Browser; Outliner; PlayerStart; \"in my game\" plus UE signals. Skip for: pure conceptual/docs questions, Unity, Godot, or unrelated uses of \"blueprint\"/\"sequencer\"/\"widget\"."
++description: "Inspect or change a live Unreal Editor through Epic's official MCP. Use for actual editor or asset tasks and connection diagnosis; skip conceptual Unreal questions that need no project access."
+ ---
+ 
+-# Unreal MCP
++# Unreal MCP for ChatGPT Desktop
+ 
+-You are wired into a live Unreal Editor through the `unreal-mcp` MCP server. The server exposes hundreds of tools across 30+ toolsets (actors, blueprints, materials, Niagara, Sequencer, Control Rigs, GAS, automation tests, Live Coding, and more) registered through Unreal's `ToolsetRegistry`. Use it to inspect and mutate live editor state instead of telling the user to do it manually.
++Use Epic's official Unreal MCP server and discover its live schemas. This package
++changes the client integration, not the Unreal tool implementations.
+ 
+-You don't need to memorize tool names. The flow below has you discover them on demand.
++## Desktop operating contract
+ 
+-The connection can appear as `unreal-mcp-proxy` when the engine's optional proxy is installed. Use that connection for Unreal tools. The proxy keeps Unreal's native tool definitions; it does not introduce replacement discovery or dispatch tools. See `references/setup.md` for installation.
++- Explicit user instructions and authorization boundaries take precedence over
++  this skill. An analysis request does not authorize project edits.
++- Use a conversation running on This computer / Local. A cloud executor's
++  loopback address is not the user's Unreal Editor.
++- Prefer the already available Unreal connection. Plugin tools may be namespaced;
++  discover the actual tool handles rather than guessing their names.
++- Resolve the endpoint from the user's existing working connection and intended
++  Unreal Editor configuration/logs. Preserve a custom port and URL path.
++- The bundled `http://127.0.0.1:8000/mcp` is the official first-setup default,
++  not a detected endpoint. Never overwrite an existing configuration with it.
++- Do not rewrite global client configuration, restart the editor, change
++  permissions, or install a proxy merely because a tool is not visible.
+ 
+-## First step every time: discover the tool you need, then dispatch it via `call_tool`
++## Discover, then dispatch
+ 
+-Tool search is on by default, so the MCP server advertises only three meta-tools for the whole session: `list_toolsets`, `describe_toolset`, and `call_tool`. Tool names like `BlueprintTools.create` or `SequencerTools.create_level_sequence` are **not in `tools/list`**. They are dispatched server-side through `call_tool` and never registered as native MCP tools. This is deliberate. It keeps your context window small and the prompt cache warm.
++1. Call `list_toolsets`, or go directly to `describe_toolset` when the relevant
++   toolset is already clear. Read its current input and output schemas.
++2. Call the advertised dispatcher `call_tool` with `toolset_name`, `tool_name`,
++   and an `arguments` object matching that schema. Domain tools are not necessarily
++   exposed as separate native MCP tools.
++3. Omit `toolset_name` only for a tool registered directly on the MCP server.
++   Never recursively dispatch `call_tool` through itself.
++4. Serialize live Unreal calls. Check each response before issuing the next call,
++   particularly for mutations and operations that share editor state.
+ 
+-When you start work:
++Tool-search mode normally exposes only `list_toolsets`, `describe_toolset`, and
++`call_tool`; three meta-tools do not mean Unreal has only three operations.
+ 
+-1. Call `list_toolsets` to see what's registered, then `describe_toolset` on the candidate(s) to read their tool schemas. If you already know which toolset you need (the user said "make a Blueprint" → the Blueprint toolset), skip the listing and go straight to `describe_toolset` to confirm the available tools and their signatures.
+-2. Invoke the tool with `call_tool`: pass `toolset_name`, `tool_name`, and an `arguments` object matching the schema you just read. The result comes back on the same turn. No extra round-trip needed.
+-3. Top-level dispatch (omitting `toolset_name`) is reserved for tools registered directly on the MCP server and is rejected for `call_tool` itself.
++## Load relevant Unreal Agent Skills
+ 
+-Missing tools do not prove that the editor is stopped. Check the configured `unreal-mcp` or `unreal-mcp-proxy` connection and follow `references/operations.md`. A proxy can stay connected while Unreal is unavailable, and a client can keep a stale catalog after recovery. `unreal_mcp_status` reports the proxy's session state, not current reachability. Verify recovery with a read-only Unreal tool call. For first-time configuration, follow `references/setup.md`.
++For unfamiliar project work, discover `AgentSkillToolset`, call `ListSkills`,
++and load relevant entries with `GetSkills`. These engine/project instruction
++bundles are separate from this desktop plugin's three client skills. Follow
++applicable project knowledge within the user's instructions and task scope.
+ 
+-## Safety rules
++## Compilation and editor changes
+ 
+-Follow these rules to protect live editor state.
++- Do not initiate Build, compilation, or Live Coding without explicit user
++  authorization for that operation. A request to edit or fix code alone does not
++  authorize compilation. Reuse prior authorization within its stated scope.
++- Inspect tool schemas and scripts for compilation side effects before calling
++  them. Tests or scripts that trigger compilation require the same authorization.
++- If compilation is already running, wait or report the busy state; do not start
++  another compile. Once authorized, use the actual available compile tool and
++  wait for its result instead of assuming success.
++- Inspect PIE state before an editor-only operation. Do not stop a running session
++  without authorization when stopping it changes the user's active work.
++- Preserve a recovery point before risky bulk changes. Respect requests to keep
++  changes unsaved. Do not delete, move, or overwrite unrelated assets.
++- Read returned status fields as well as transport errors. A successful HTTP
++  response alone does not prove an asset operation or compilation succeeded.
+ 
+-- **Save first, then save again.** Tell the user to save the project (or call `AssetTools` save APIs) before any bulk change, and again after. MCP edits are not always undoable, especially across compilation boundaries. Treat anything that touches multiple assets as a destructive operation that needs a recovery point.
+-- **Wait for compilation.** If C++ or shader compilation is in flight, your tool calls will hang or fail in confusing ways. To rebuild C++ from the running editor, drive `LiveCodingToolset.CompileLiveCoding` and wait on its result instead of asking the user to switch to the IDE. That tool blocks until the compile actually finishes and surfaces MSVC diagnostics.
+-- **Control concurrent calls.** MCP accepts concurrent requests and handles dispatch synchronization. Asynchronous tools can overlap, and request order does not guarantee execution or completion order. Serialize dependent calls and mutations that can affect the same asset or editor state. Use parallel calls only for independent work when the tools support safe overlap. Multiple agents can use one editor, but their conflicting changes can cause adverse effects.
+-- **Always check the result.** Blueprint compilation, widget creation, material edits: many tools return a status that flips between success and failure with no exception thrown on the wire. Read the response before moving on. Treat anything that isn't an explicit success as a stop.
+-- **Mind PIE.** Editor-only tools (asset creation in particular) behave differently while Play-in-Editor is active. If a result looks wrong, check whether PIE is running and stop it if so.
++## Connection failures and verification
+ 
+-## Project skills
++Use [setup.md](references/setup.md) for setup and
++[operations.md](references/operations.md) for errors, ports, stale schemas, or
++optional proxy recovery. Missing tools alone do not prove the editor is stopped.
+ 
+-A project or plugin can register **Agent Skills**: named bundles of instructions that capture workflow knowledge the agent wouldn't otherwise have (a project's naming conventions, folder layout, required setup steps, or the canonical sequence for a multi-step task). These are separate from the toolsets themselves and are reached through the agent skill toolset (`AgentSkillToolset`), not through `list_toolsets`.
+-
+-Check for them the same way you discover tools, and do it whenever you start unfamiliar work in a project rather than just once:
+-
+-1. Call `AgentSkillToolset.ListSkills` (through `call_tool`) to see what skills the project registers. Each entry carries a short description of what it covers and when it applies.
+-2. If a skill's description looks relevant to what the user asked, call `AgentSkillToolset.GetSkills` on it to load the full instructions, then follow them.
+-3. If nothing matches, fall back to the tool-discovery flow above.
+-
+-A relevant project skill's instructions take precedence over your generic defaults: it exists precisely because the project's way of doing something differs from the obvious one. (Authoring or editing these skills is a separate task covered by the `unreal-skill` companion skill below.)
+-
+-## Reference files
+-
+-- `references/setup.md`: first-time MCP server setup, client configuration, and optional proxy installation.
+-- `references/operations.md`: console commands, settings, proxy recovery, and troubleshooting for missing tools or failed calls.
++Confirm live connectivity with a successful read-only Unreal tool call, such as
++reading selected actors. An empty selection is a valid result. HTTP reachability,
++a proxy status, and a cached tool list are weaker checks; report them separately.
++If a call fails, give the exact error and distinguish facts from hypotheses.
+ 
+ ## Companion skills
+ 
+-- **`create-toolset`**: use when authoring a new toolset or adding tools to an existing one. Covers design principles, C++ and Python conventions, registration, error handling, and testing.
+-- **`unreal-skill`**: use when creating, updating, or reviewing an Agent Skill. Covers what makes a good skill and how to structure one.
++- `create-toolset`: add or extend C++/Python ToolsetRegistry tools.
++- `unreal-skill`: create or update a project/plugin Unreal Agent Skill.
++
++Report changed objects and assets, actual validation performed, and remaining
++limitations. Static inspection is not a successful UE build or runtime test.
+--- upstream/skills/unreal-skill/SKILL.md
++++ desktop/skills/unreal-skill/SKILL.md
+@@ -1,9 +1,26 @@
+ ---
+ name: unreal-skill
+-description: "Use this skill when creating, editing, or reviewing an Unreal Engine Agent Skill, a named bundle of instructions registered with the unreal-mcp server (distinct from Claude Code's harness skills under `.claude/skills/`). Trigger when the user wants to add or change a skill that the in-editor agent will load. Concrete triggers: 'create a new Agent Skill', 'add a skill for X workflow', 'edit/update this skill', 'review my skill', 'make a Python skill class', 'create a skill UAsset', 'register a skill so Claude picks it up'; writing or editing a `SKILL.md` inside a UE plugin's `Skills/` or `Python/skills/` folder; defining a Python skill class registered with the skill registry; calling `CreateSkill`, `ListSkills`, or `GetSkills` MCP tools; designing a skill's name, description, or instruction body. SKIP for: authoring a toolset (use create-toolset), invoking an existing skill at runtime (use unreal-mcp), editing harness-level Claude Code skills under `.claude/skills/` or `~/.claude/skills/`, or generic uses of the word 'skill'."
++description: "Create, edit, or review Unreal Agent Skills registered in a project or plugin. These are engine-side instruction bundles, not ChatGPT client skills or MCP tool implementations."
+ ---
+ 
+ # Unreal Skill
++
++## Desktop adaptation and authorization
++
++Explicit user instructions take precedence over this skill. Use the already
++configured Unreal MCP connection for live queries and inspect its actual schema.
++Resolve its endpoint from existing configuration; do not assume the bundled
++first-setup default matches a running editor. Serialize live calls.
++
++Do not execute Build, compilation, Live Coding, or a test/script that triggers
++compilation without explicit user authorization covering that operation. An edit
++request alone does not grant it. Reuse authorization already given within scope.
++Compilation/testing guidance below applies after the relevant authorization.
++
++Preserve existing user work. A scoped request to create or edit a tool or skill
++authorizes that requested work; do not add repeated confirmation steps for it.
++Ask only when a missing decision materially changes scope or risk. Distinguish
++source inspection, compilation, and actual editor/runtime verification.
+ 
+ You are authoring an Unreal Engine Agent Skill: a named, reusable bundle of instructions that packages essential knowledge the agent either doesn't know or needs to pay close attention to. A skill can provide general best practices in a domain, guidance on a specific workflow, or a mix of both.

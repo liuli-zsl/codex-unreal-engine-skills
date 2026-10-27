@@ -1,0 +1,15 @@
+interface:
+  display_name: "Unreal MCP"
+  short_description: "Inspect and operate a local Unreal Editor"
+  default_prompt: "Use $unreal-mcp to read the currently selected objects without modifying the project."
+
+policy:
+  allow_implicit_invocation: true
+
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "unreal-mcp"
+      description: "Official Unreal Engine MCP; configure for the intended editor"
+      transport: "streamable_http"
+      url: "http://127.0.0.1:8000/mcp"

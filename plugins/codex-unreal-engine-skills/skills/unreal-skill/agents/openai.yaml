@@ -1,0 +1,7 @@
+interface:
+  display_name: "Author Unreal Agent Skill"
+  short_description: "Create project or plugin Unreal Agent Skills"
+  default_prompt: "Use $unreal-skill to create the requested engine-side workflow skill."
+
+policy:
+  allow_implicit_invocation: true

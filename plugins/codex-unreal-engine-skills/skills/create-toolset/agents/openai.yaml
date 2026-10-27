@@ -1,0 +1,7 @@
+interface:
+  display_name: "Create Unreal Toolset"
+  short_description: "Author Unreal tools with Epic's C++/Python guidance"
+  default_prompt: "Use $create-toolset to design the requested Unreal MCP tool; ask before compilation."
+
+policy:
+  allow_implicit_invocation: true

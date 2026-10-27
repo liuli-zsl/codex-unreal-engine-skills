@@ -1,0 +1,21 @@
+{
+  "version": "0.1.1",
+  "checks": {
+    "three_skill_entrypoints": "passed quick_validate.py",
+    "plugin_mcp_marketplace_structure": "passed documentation-based checks; not full external JSON Schema validation",
+    "official_first_setup_default": "http://127.0.0.1:8000/mcp",
+    "matching_dependency_metadata": true,
+    "local_environment_values_absent": true,
+    "license_unchanged": true,
+    "authoring_code_examples_preserved": {
+      "create-toolset": 11,
+      "unreal-skill": 1
+    },
+    "relative_references_valid": 3
+  },
+  "not_performed": [
+    "Client installation/import",
+    "Installed skill activation and end-to-end tasks",
+    "UE build or editor mutation"
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "name": "codex-unreal-engine-skills-local",
+  "interface": {
+    "displayName": "Codex Unreal Engine Skills Local"
+  },
+  "plugins": [
+    {
+      "name": "codex-unreal-engine-skills",
+      "source": {
+        "source": "local",
+        "path": "./plugins/codex-unreal-engine-skills"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}
