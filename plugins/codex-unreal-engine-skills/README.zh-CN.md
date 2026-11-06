@@ -1,6 +1,6 @@
 # Unreal Engine Skills for Codex
 
-当前版本：**0.1.4**。基于 Epic Games 的 Unreal Engine Skills for Claude Code 上游 3.1.1，面向本机 ChatGPT/Codex 会话；本包为非官方适配版。
+当前版本：**0.1.5**。基于 Epic Games 的 Unreal Engine Skills for Claude Code 上游 3.1.1，面向本机 ChatGPT/Codex 会话；本包为非官方适配版。
 
 ## 包含的技能
 
@@ -10,10 +10,10 @@
 
 连接声明见 [mcp.json](mcp.json)，技能位于 [skills/](skills/)。
 随包地址 `http://127.0.0.1:8000/mcp` 是初次配置示例，使用时以目标编辑器实际地址和已有连接为准。
-打开插件详情页 → **管理** → **unreal-mcp-settings（Unreal MCP 地址设置）**，直接在原生 **Unreal MCP 地址** 输入框填写完整 URL，按 Enter 或移开焦点保存。无需聊天或手动修改文件。需要 Python 3 和支持 `openai/settings` 的桌面版 Codex；UE 未启动时也能修改。个人设置写入前备份，重新连接或新开本机会话后使用。
+打开插件详情页 → **设置 → Unreal Editor 连接**，分别填写 **IP**、**URL 路径**、**端口号**，默认值依次为 `127.0.0.1`、`/mcp`、`8000`。按 Enter 或移开焦点保存；错误输入不会写入。端口范围 1–65535，路径以 `/` 开头。点击 **恢复默认值** 一次保存默认 HTTP 地址，重新打开页面刷新显示。普通修改保留已有 HTTPS 协议；升级不覆盖自定义地址。无需聊天或手动修改文件。需要 Python 3 和支持 `openai/settings` 的桌面版 Codex；UE 未启动时也能修改。个人设置写入前备份，重新连接或新开本机会话后使用。
 
 插件标识为 `codex-unreal-engine-skills`，显示名称为 `Unreal Engine Skills for Codex`。
-0.1.2 更新了源码命名。0.1.4 用原生设置替代 0.1.3 的聊天配置入口。Windows 上已通过真实 Codex 宿主验证扩展发现、读取、保存、回读、无效输入及配置保留；桌面点击与其他操作系统未验证。
+0.1.2 更新了源码命名，0.1.4 改为原生设置，0.1.5 拆分三项并增加恢复默认值。Windows 上已通过真实 Codex 宿主验证独立读写、重置、回读、非法输入、备份及配置保留；新版表单点击与其他操作系统未验证。
 
 ## 验证状态
 

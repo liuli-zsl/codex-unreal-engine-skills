@@ -11,9 +11,13 @@ changes the client integration, not the Unreal tool implementations.
 ## Configure the connection from the plugin page
 
 The plugin's native settings form uses the `openai/settings` MCP extension.
-Direct users to the plugin page > Manage > `unreal-mcp-settings`
-(Unreal MCP 地址设置), then the **Unreal MCP 地址** field. Press Enter or leave
-the field to save. Do not replace this UI with a suggested chat prompt.
+Direct users to the plugin details page > Settings > Unreal Editor 连接.
+The **IP**, **URL 路径** and **端口号** fields default to `127.0.0.1`, `/mcp`
+and `8000`. Press Enter or leave a field to save only that field. Invalid values
+are rejected. **恢复默认值** restores and saves the default HTTP endpoint; reopen
+the page to refresh the displayed fields. Do not replace this UI with a chat
+prompt or silently invoke reset. Existing custom URLs and HTTPS survive ordinary
+edits and upgrades.
 
 The bundled [settings server](scripts/settings_server.py) reads the effective
 address and uses the [endpoint helper](scripts/configure_endpoint.py) to back up

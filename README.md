@@ -4,7 +4,7 @@ English | [简体中文](README.zh-CN.md)
 
 An unofficial desktop adaptation of Epic Games' [Unreal Engine Skills for Claude Code](https://github.com/EpicGames/unreal-engine-skills-for-claude-code-plugin), for local ChatGPT/Codex sessions. It packages client-side skills and an MCP connection to a running Unreal Editor.
 
-Plugin ID: `codex-unreal-engine-skills`. Version: **0.1.4**. Upstream snapshot: **3.1.1**, commit `a6aa73ada02a9fb1f5415bec491f9942c519b297`.
+Plugin ID: `codex-unreal-engine-skills`. Version: **0.1.5**. Upstream snapshot: **3.1.1**, commit `a6aa73ada02a9fb1f5415bec491f9942c519b297`.
 
 ## Included skills
 
@@ -20,7 +20,7 @@ The adaptation adds desktop plugin and marketplace metadata, preserves the upstr
 
 This directory is the local marketplace root. Keep its hidden `.agents/` directory together with `plugins/`. The marketplace is named `codex-unreal-engine-skills-local` (display name **Codex Unreal Engine Skills Local**), and its plugin is **Unreal Engine Skills for Codex**.
 
-Open the plugin page, choose **Manage**, then open **unreal-mcp-settings** (Unreal MCP 地址设置). Edit **Unreal MCP 地址** in the native settings form; press Enter or leave the field to save. This uses the official [`openai/settings` extension](https://developers.openai.com/plugins/build/extensions), not a chat prompt. The local settings server needs Python 3 and a desktop Codex host supporting structured MCP settings. It works while Unreal is offline, backs up the existing user config, and changes only `mcp_servers.unreal-mcp.url`. Reconnect MCP or open a new local chat after saving.
+Open the plugin details page and find **Settings > Unreal Editor 连接**. Edit **IP**, **URL 路径** (URL path), and **端口号** (port) separately; press Enter or leave each field to save. Defaults are `127.0.0.1`, `/mcp`, and `8000`. The IP field also accepts IPv6 and hostnames. Ports must be integers from 1 to 65535; paths must start with `/` and contain no whitespace, query, or fragment. Invalid input is rejected without changing the saved address. **恢复默认值** (Restore defaults) saves `http://127.0.0.1:8000/mcp` in one action; reopen the page to refresh the displayed fields. Ordinary field edits preserve an existing HTTPS scheme. Opening or upgrading the plugin never resets a custom address. This uses the official [`openai/settings` extension](https://developers.openai.com/plugins/build/extensions), not a chat prompt. The local settings server needs Python 3 and a desktop Codex host supporting structured MCP settings. It works while Unreal is offline, backs up the existing user config, and changes only `mcp_servers.unreal-mcp.url`. Reconnect MCP or open a new local chat after saving.
 
 The user address applies across your local projects, survives a plugin update, and can also be managed in Codex MCP settings. The resulting user connection stays configured when the plugin is removed. The Unreal Editor must listen on the same address. The bundled first-install default is `http://127.0.0.1:8000/mcp`.
 
@@ -40,7 +40,7 @@ With the intended editor and its MCP server running, ask:
 
 Discover live schemas with `list_toolsets` and `describe_toolset`, then use `call_tool` to dispatch the read operation. An empty selection is valid.
 
-Version 0.1.4 was installed in an isolated Windows desktop CLI profile (Codex 0.166.0-alpha.6, Python 3.11). The actual host discovered `openai/settings` and successfully called the native form's read/update tools. URL persistence, invalid-input rejection, backups, unchanged sibling settings and authentication protection passed. Desktop clicks/rendering and a live editor call were not part of this check; other operating systems are unverified. The settings process resolves its installed Codex profile from `PLUGIN_ROOT` and uses the launching desktop CLI on Windows, avoiding an unrelated older CLI on PATH.
+Version 0.1.5 was installed in an isolated Windows desktop CLI profile (Codex 0.166.0-alpha.6, Python 3.11). The actual host discovered `openai/settings` and successfully called read, partial update and reset tools. Independent field edits, reset persistence, 21 invalid inputs, port boundaries, IPv6, existing HTTPS/hostname URLs, damaged-URL recovery, backups, unchanged sibling settings, authentication protection and disabled-state preservation passed. Desktop clicks/rendering and a live editor call were not part of this check; other operating systems are unverified. The settings process resolves its installed Codex profile from `PLUGIN_ROOT` and uses the launching desktop CLI on Windows, avoiding an unrelated older CLI on PATH.
 
 On **2026-10-27**, the existing 0.1.1 installation exposed all three skills and the MCP tools. At that time, its plugin files matched the 0.1.1 source copy before documentation changes. `list_toolsets`, `describe_toolset`, and `GetSelectedActors` succeeded; the latter returned one selected actor. This verifies the existing installation's read-only connection, not a clean installation, asset editing, compilation, or every toolset. See [CHANGELOG.md](CHANGELOG.md).
 

@@ -56,9 +56,19 @@ when diagnosing a discrepancy.
 The portable plugin's root `mcp.json` declares a Streamable HTTP connection using
 UE's official first-setup default `http://127.0.0.1:8000/mcp`. This is a configurable
 example, not an automatic discovery result. Prefer an already configured working
-Unreal connection. For a personal endpoint, open the plugin page > Manage >
-`unreal-mcp-settings` (Unreal MCP 地址设置). Edit **Unreal MCP 地址** in the
-native form and press Enter or leave the field to save. No chat is required.
+Unreal connection. Open the plugin details page > Settings > Unreal Editor 连接.
+Edit **IP**, **URL 路径** (path) and **端口号** (port) separately; press Enter or
+leave a field to save. Defaults are `127.0.0.1`, `/mcp`, and `8000`. IP accepts
+IPv4, IPv6 or a hostname without a scheme, port or path. Port must be an integer
+from 1 to 65535; path must start with `/` and contain no whitespace, query or
+fragment. Invalid input is rejected. Existing HTTPS is preserved by field edits.
+
+**恢复默认值** invokes the same-server `reset_defaults` action with no arguments
+and saves the default HTTP URL. Reopen the plugin page to refresh its fields
+after the action. A malformed stored URL displays defaults with a recovery note
+without writing anything until the user clicks reset. Transport, authentication
+and managed-configuration conflicts still require resolving the actual conflict.
+The reset changes the client URL, not UE settings, and works while UE is offline.
 
 The additional local stdio [settings server](../scripts/settings_server.py)
 advertises the official [`openai/settings` extension](https://developers.openai.com/plugins/build/extensions).

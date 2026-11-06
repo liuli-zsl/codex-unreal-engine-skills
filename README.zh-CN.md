@@ -2,7 +2,7 @@
 
 [English](README.md) | 简体中文
 
-当前插件版本：**0.1.4**。协作约定见 [AGENTS.md](AGENTS.md)，变更与验证记录见 [CHANGELOG.md](CHANGELOG.md)。
+当前插件版本：**0.1.5**。协作约定见 [AGENTS.md](AGENTS.md)，变更与验证记录见 [CHANGELOG.md](CHANGELOG.md)。
 
 这是基于 Epic Games 官方技能仓库制作的通用桌面适配版，不是 Epic/OpenAI 官方发行版。
 保留三个技能及官方工具开发示例，目标是 ChatGPT 统一桌面端的本机会话。
@@ -18,7 +18,7 @@
 
 ## 先看验证范围
 
-0.1.4 已在 Windows、Python 3.11、Codex 0.166.0-alpha.6 的隔离配置中验证安装。真实 Codex 宿主识别了 `openai/settings`，并成功调用原生表单的读取和保存工具；地址回读、无效输入、备份、其他配置保留及认证保护通过。尚未实际点击桌面表单或连接 UE 工程，其他操作系统未验证。
+0.1.5 已在 Windows、Python 3.11、Codex 0.166.0-alpha.6 隔离配置中安装，并通过真实 Codex 宿主验证三项独立读写、恢复默认值及回读、21 种非法输入、端口边界、IPv6、HTTPS/主机名保留、错误地址恢复、备份、其他配置与禁用状态保留及认证保护。新版表单尚未实际点击，未连接 UE 工程，其他操作系统未验证。
 
 2026-10-27 已确认现有 0.1.1 安装加载了三个技能和 Unreal MCP 工具。
 文档修改前，源码插件目录与已安装缓存内容一致；实际调用 `list_toolsets`、
@@ -69,9 +69,15 @@ MCP 服务键仍为 `unreal-mcp`，安装时注意避免无意同时启用两份
 端口和 URL 路径。使用自定义端口、多个编辑器或代理时，不应假设默认示例适用。
 已有可用连接优先。下面的配置流程会在你提交地址后保存个人设置。
 
-打开插件详情页 → **管理** → **unreal-mcp-settings（Unreal MCP 地址设置）**，在原生设置表单中修改地址，无需进入聊天。页面通过官方 [`openai/settings` 扩展](https://developers.openai.com/plugins/build/extensions) 提供输入框。
+打开插件详情页，找到 **设置 → Unreal Editor 连接**，直接在原生表单中修改，无需进入聊天。页面通过官方 [`openai/settings` 扩展](https://developers.openai.com/plugins/build/extensions) 提供三个输入项。
 
-1. 在 **Unreal MCP 地址** 输入框填写完整地址，例如 `http://127.0.0.1:9000/mcp`；按 Enter 或移开焦点保存。
+| 输入项 | 默认值 | 校验 |
+| --- | --- | --- |
+| IP | `127.0.0.1` | 支持 IPv4、IPv6 或主机名，不要填写协议、端口或路径。 |
+| URL 路径 | `/mcp` | 以 `/` 开头，不包含空格、查询参数或片段。 |
+| 端口号 | `8000` | 1–65535 的整数。 |
+
+1. 每项按 Enter 或移开焦点保存；只修改这一项，非法输入不会写入。**恢复默认值** 按钮会一次保存 `http://127.0.0.1:8000/mcp`；点击后重新打开页面刷新显示。普通字段编辑保留原有 HTTPS 协议；升级或打开页面不会覆盖自定义地址。
 2. 本地设置服务需要 Python 3 和支持原生 MCP 设置的桌面版 Codex；UE 未启动时也能配置。只更新个人设置 `mcp_servers.unreal-mcp.url`，写入前备份，保存后回读。已有认证或其他传输方式的同名连接会拒绝修改，避免误改连接目标。
 3. 重新连接 MCP，或新开本地聊天。个人地址适用于本机多个项目，插件更新后也会沿用。卸载插件后，这条用户连接仍可在 Codex 的 MCP 服务器设置中管理。UE 端的监听地址需单独设置。
 
@@ -88,7 +94,7 @@ MCP 服务键仍为 `unreal-mcp`，安装时注意避免无意同时启用两份
 
 上游：https://github.com/EpicGames/unreal-engine-skills-for-claude-code-plugin
 上游快照：`a6aa73ada02a9fb1f5415bec491f9942c519b297`，原插件清单版本 3.1.1。
-当前适配版：0.1.4。完整来源说明见插件内 `UPSTREAM.md`；逐文件文本差异见
+当前适配版：0.1.5。完整来源说明见插件内 `UPSTREAM.md`；逐文件文本差异见
 本包 `upstream-changes.diff`。技能脚本没有增加额外编译执行器。
 
 ## 项目结构与维护

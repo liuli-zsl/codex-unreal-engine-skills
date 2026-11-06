@@ -5,25 +5,42 @@ Only JSON-RPC is written to stdout. No third-party Python packages are required.
 """
 
 import json
+import ipaddress
 import os
 from pathlib import Path
+import re
 import subprocess
 import sys
+from urllib.parse import urlsplit
 
 sys.dont_write_bytecode = True
 
 from configure_endpoint import codex_cli, effective_server, endpoint, save_url
 
 
-VERSION = "0.1.4"
+VERSION = "0.1.5"
 READ_TOOL = "read_settings"
 UPDATE_TOOL = "update_settings"
+RESET_TOOL = "reset_defaults"
 EXTENSION = {"openai/settings": {"readTool": READ_TOOL, "updateTool": UPDATE_TOOL}}
-URL_SCHEMA = {
-    "type": "string",
-    "title": "Unreal MCP 地址",
-    "description": "输入 UE 编辑器的完整 HTTP(S) 地址。按 Enter 或离开输入框保存；保存后重新连接 MCP 或新开本地会话。",
-    "minLength": 1,
+DEFAULTS = {"ip": "127.0.0.1", "path": "/mcp", "port": 8000}
+DEFAULT_URL = "http://127.0.0.1:8000/mcp"
+FIELD_SCHEMAS = {
+    "ip": {
+        "type": "string", "title": "IP",
+        "description": "默认 127.0.0.1（本机）。支持 IPv4、IPv6 或主机名；不要填写 http://、路径或端口。",
+        "minLength": 1, "maxLength": 253,
+    },
+    "path": {
+        "type": "string", "title": "URL 路径",
+        "description": "默认 /mcp。以 / 开头，与 UE 的服务器 URL 路径一致；不要填写完整地址或查询参数。",
+        "minLength": 1, "pattern": r"^/(?!/)[^\s?#\\]*$",
+    },
+    "port": {
+        "type": "integer", "title": "端口号",
+        "description": "默认 8000。范围 1–65535，与 UE 的服务器端口号一致。按 Enter 或移开焦点保存。",
+        "minimum": 1, "maximum": 65535,
+    },
 }
 TOOLS = [
     {
@@ -46,8 +63,8 @@ TOOLS = [
         "inputSchema": {
             "type": "object",
             "properties": {"set": {
-                "type": "object", "properties": {"url": {"type": "string"}},
-                "required": ["url"], "additionalProperties": False,
+                "type": "object", "properties": FIELD_SCHEMAS,
+                "minProperties": 1, "additionalProperties": False,
             }},
             "required": ["set"], "additionalProperties": False,
         },
@@ -58,12 +75,66 @@ TOOLS = [
         "annotations": {"readOnlyHint": False, "destructiveHint": False,
                         "idempotentHint": True, "openWorldHint": False},
     },
+    {
+        "name": RESET_TOOL,
+        "title": "恢复默认值",
+        "description": "Restore the Unreal MCP client address to http://127.0.0.1:8000/mcp when the user clicks Restore defaults.",
+        "inputSchema": {"type": "object", "additionalProperties": False},
+        "outputSchema": {
+            "type": "object", "properties": {"values": {"type": "object"}},
+            "required": ["values"],
+        },
+        "annotations": {"readOnlyHint": False, "destructiveHint": False,
+                        "idempotentHint": True, "openWorldHint": False},
+    },
 ]
 
 
-def values(cli):
-    # Never expose a URL containing embedded credentials to the settings UI.
-    return {"url": endpoint(effective_server(cli)["transport"]["url"])}
+def validated_fields(fields):
+    ip, path, port = fields["ip"], fields["path"], fields["port"]
+    if not isinstance(ip, str) or not ip or len(ip) > 253 or "%" in ip:
+        raise ValueError("IP 无效，请填写 IP 或主机名，例如 127.0.0.1。")
+    try:
+        ipaddress.ip_address(ip)
+    except ValueError:
+        # Preserve existing DNS endpoints, but reject malformed numeric IPs,
+        # embedded schemes, ports, credentials and paths.
+        if (re.fullmatch(r"[0-9.]+", ip) or not all(
+                re.fullmatch(r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?", label)
+                for label in ip.removesuffix(".").split("."))):
+            raise ValueError("IP 无效：不要包含协议、端口或路径。IPv6 不需要方括号。")
+    if (not isinstance(path, str) or not re.fullmatch(FIELD_SCHEMAS["path"]["pattern"], path)
+            or any(ord(c) < 32 or ord(c) == 127 for c in path)
+            or re.search(r"%(?![0-9A-Fa-f]{2})", path)):
+        raise ValueError("URL 路径须以 / 开头，不能包含空格、查询参数、片段或无效转义。例如 /mcp。")
+    if (isinstance(port, bool) or not isinstance(port, (int, float))
+            or not 1 <= port <= 65535 or int(port) != port):
+        raise ValueError("端口号必须是 1–65535 的整数，默认 8000。")
+    return {"ip": ip, "path": path, "port": int(port)}
+
+
+def split_endpoint(raw):
+    parsed = urlsplit(endpoint(raw))
+    fields = validated_fields({
+        "ip": parsed.hostname, "path": parsed.path or "/",
+        "port": parsed.port or (443 if parsed.scheme == "https" else 80),
+    })
+    return parsed.scheme, fields
+
+
+def combine_endpoint(scheme, fields):
+    fields = validated_fields(fields)
+    host = f'[{fields["ip"]}]' if ":" in fields["ip"] else fields["ip"]
+    return endpoint(f'{scheme}://{host}:{fields["port"]}{fields["path"]}')
+
+
+def write_endpoint(cli, url, previous):
+    if previous != url:
+        save_url(cli, url, expected_url=previous)
+    raw = effective_server(cli)["transport"]["url"]
+    if raw != url:
+        raise ValueError("项目或管理配置覆盖了此地址，请检查对应设置。")
+    return split_endpoint(raw)[1]
 
 
 def call_tool(params):
@@ -73,25 +144,41 @@ def call_tool(params):
         if name == READ_TOOL:
             if args != {}:
                 raise ValueError("read_settings takes no arguments.")
+            raw = effective_server(codex_cli())["transport"]["url"]
+            try:
+                scheme, fields = split_endpoint(raw)
+                note = f"当前使用 {scheme.upper()}；修改后重新连接 MCP 或新开本地会话。"
+            except ValueError:
+                # Keep the recovery button available without silently writing
+                # defaults just because the user opened the page.
+                fields = dict(DEFAULTS)
+                note = "当前地址格式无效，暂显示默认值；点击恢复默认值后才会修复已保存地址。"
             data = {
-                "schema": {"type": "object", "properties": {"url": URL_SCHEMA}},
-                "values": values(codex_cli()),
+                "schema": {"type": "object", "properties": FIELD_SCHEMAS},
+                "values": fields,
                 "layout": [{"kind": "group", "title": "Unreal Editor 连接",
-                            "items": [{"kind": "property", "property": "url"}]}],
+                            "items": [{"kind": "property", "property": key} for key in DEFAULTS]
+                            + [{"kind": "tool", "tool": RESET_TOOL,
+                                "description": "恢复为 127.0.0.1、/mcp、8000（HTTP）并保存；点击后重新打开此页刷新显示。" + note}]}],
             }
         elif name == UPDATE_TOOL:
             if (not isinstance(args, dict) or set(args) != {"set"}
-                    or not isinstance(args["set"], dict) or set(args["set"]) != {"url"}
-                    or not isinstance(args["set"]["url"], str)):
-                raise ValueError("update_settings requires set.url as a string.")
-            url = endpoint(args["set"]["url"])
+                    or not isinstance(args["set"], dict) or not args["set"]
+                    or not set(args["set"]) <= set(DEFAULTS)):
+                raise ValueError("仅支持修改 IP、URL 路径和端口号。")
             cli = codex_cli()
-            if values(cli)["url"] != url:
-                save_url(cli, url)
-            current = values(cli)
-            if current["url"] != url:
-                raise ValueError("A project or managed setting overrides this user URL.")
-            data = {"values": current}
+            previous = effective_server(cli)["transport"]["url"]
+            scheme, fields = split_endpoint(previous)
+            url = combine_endpoint(scheme, {**fields, **args["set"]})
+            data = {"values": write_endpoint(cli, url, previous)}
+        elif name == RESET_TOOL:
+            if args != {}:
+                raise ValueError("恢复默认值不接受参数。")
+            cli = codex_cli()
+            previous = effective_server(cli)["transport"]["url"]
+            data = {"values": write_endpoint(cli, DEFAULT_URL, previous)}
+            return {"content": [{"type": "text", "text": "已恢复默认值：127.0.0.1 / /mcp / 8000。重新打开插件页查看；重新连接 MCP 或新开本地会话后使用。"}],
+                    "structuredContent": data}
         else:
             raise ValueError("Unknown settings tool.")
         return {"content": [], "structuredContent": data}

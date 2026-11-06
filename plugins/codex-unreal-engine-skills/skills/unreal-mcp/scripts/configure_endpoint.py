@@ -99,7 +99,7 @@ def rpc(process, number, method, params):
     raise ValueError(f"Codex stopped or timed out during {method}. Check the effective URL.")
 
 
-def save_url(cli, url):
+def save_url(cli, url, expected_url=None):
     # Use Codex's TOML editor to preserve comments, other keys and concurrent edits.
     with subprocess.Popen(
         [cli, "app-server", "--listen", "stdio://"], stdin=subprocess.PIPE,
@@ -116,6 +116,8 @@ def save_url(cli, url):
                          layer["name"]["type"] == "user" and not layer["name"].get("profile")), None)
             if user is None:
                 raise ValueError("Codex did not expose its writable user settings.")
+            if expected_url is not None and effective_server(cli)["transport"]["url"] != expected_url:
+                raise ValueError("The address changed concurrently. Refresh settings and try again.")
             for settings in (user["config"], config["config"]):
                 existing = settings.get("mcp_servers", {}).get(SERVER, {})
                 if "command" in existing:
