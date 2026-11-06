@@ -1,6 +1,6 @@
 ---
 name: unreal-mcp
-description: "Inspect or change a live Unreal Editor through Epic's official MCP. Use for the “配置 Unreal MCP 地址” plugin prompt, saving an editor endpoint, actual editor or asset tasks, and connection diagnosis; skip conceptual Unreal questions that need no project access."
+description: "Inspect or change a live Unreal Editor through Epic's official MCP. Use for actual editor or asset tasks and connection diagnosis; skip conceptual Unreal questions that need no project access."
 ---
 
 # Unreal MCP for Codex
@@ -10,22 +10,18 @@ changes the client integration, not the Unreal tool implementations.
 
 ## Configure the connection from the plugin page
 
-For “配置 Unreal MCP 地址” or an explicit request to change this plugin's client
-URL, use the bundled [endpoint helper](scripts/configure_endpoint.py) in the
-current local project directory. Resolve the script relative to this SKILL.md.
-This workflow works while the Unreal Editor is offline.
+The plugin's native settings form uses the `openai/settings` MCP extension.
+Direct users to the plugin page > Manage > `unreal-mcp-settings`
+(Unreal MCP 地址设置), then the **Unreal MCP 地址** field. Press Enter or leave
+the field to save. Do not replace this UI with a suggested chat prompt.
 
-1. Run the script with Python 3 and no arguments to display the effective URL.
-   If the user hasn't supplied a new URL, show the current one, ask for the full
-   HTTP(S) address in chat and wait. A suggested port is not a submitted value.
-2. When the user supplies the URL for saving, pass it as **one literal argument**
-   to the same script: `python <script> --set <URL>`. Use the desktop runtime
-   CLI when available (the helper selects it). A cancelled prompt is read-only.
-3. Report the verified effective URL and whether the server is enabled. Reconnect
-   MCP or open a new local chat to pick up the change. If the user wants a live
-   check, follow the read-only verification below. A settings read-back proves
-   configuration only. Report any write/precedence error instead of retrying
-   against the plugin cache, marketplace, project or editor settings.
+The bundled [settings server](scripts/settings_server.py) reads the effective
+address and uses the [endpoint helper](scripts/configure_endpoint.py) to back up
+and update only the user's `mcp_servers.unreal-mcp.url`. It works while Unreal
+is offline. It requires Python 3 and a desktop host supporting structured MCP
+settings. Reconnect MCP or start a new local chat after saving. The Unreal
+Editor's listening address is configured separately. Report unsupported hosts
+or write errors honestly; do not rewrite the plugin cache to force a value.
 
 ## Desktop operating contract
 

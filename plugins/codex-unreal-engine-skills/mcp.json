@@ -4,6 +4,14 @@
     "unreal-mcp": {
       "type": "streamable-http",
       "url": "http://127.0.0.1:8000/mcp"
+    },
+    "unreal-mcp-settings": {
+      "type": "stdio",
+      "command": "python",
+      "args": [
+        "-B",
+        "${PLUGIN_ROOT}/skills/unreal-mcp/scripts/settings_server.py"
+      ]
     }
   }
 }

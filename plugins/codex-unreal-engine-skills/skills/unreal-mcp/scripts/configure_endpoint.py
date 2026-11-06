@@ -33,8 +33,41 @@ def endpoint(value):
     return value
 
 
+def parent_codex_cli():
+    # MCP children receive a filtered environment. Prefer the app-server that
+    # launched this server over an unrelated (possibly older) CLI on PATH.
+    if sys.platform == "win32":
+        import ctypes
+        from ctypes import wintypes
+        kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+        kernel.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+        kernel.OpenProcess.restype = wintypes.HANDLE
+        kernel.QueryFullProcessImageNameW.argtypes = [wintypes.HANDLE, wintypes.DWORD,
+                                                     wintypes.LPWSTR, ctypes.POINTER(wintypes.DWORD)]
+        kernel.CloseHandle.argtypes = [wintypes.HANDLE]
+        handle = kernel.OpenProcess(0x1000, False, os.getppid())
+        if not handle:
+            return None
+        try:
+            size = wintypes.DWORD(32768)
+            buffer = ctypes.create_unicode_buffer(size.value)
+            if not kernel.QueryFullProcessImageNameW(handle, 0, buffer, ctypes.byref(size)):
+                return None
+            path = buffer.value
+        finally:
+            kernel.CloseHandle(handle)
+    elif sys.platform.startswith("linux"):
+        try:
+            path = os.readlink(f"/proc/{os.getppid()}/exe")
+        except OSError:
+            return None
+    else:
+        return None
+    return path if Path(path).stem.lower() == "codex" else None
+
+
 def codex_cli():
-    cli = os.environ.get("CODEX_APP_RUNTIME_CLI_PATH") or shutil.which("codex")
+    cli = os.environ.get("CODEX_APP_RUNTIME_CLI_PATH") or parent_codex_cli() or shutil.which("codex")
     if not cli:
         raise ValueError("Open a local Codex session or install the Codex CLI.")
     return cli
@@ -99,7 +132,7 @@ def save_url(cli, url):
                                                  delete=False) as backup:
                     with path.open("rb") as original:
                         shutil.copyfileobj(original, backup)
-                print("Backup:", backup.name)
+                print("Backup:", backup.name, file=sys.stderr)
             write = rpc(process, 3, "config/value/write", {
                 "filePath": str(path), "expectedVersion": user["version"],
                 "keyPath": f"mcp_servers.{SERVER}.url", "value": url, "mergeStrategy": "replace",

@@ -56,17 +56,31 @@ when diagnosing a discrepancy.
 The portable plugin's root `mcp.json` declares a Streamable HTTP connection using
 UE's official first-setup default `http://127.0.0.1:8000/mcp`. This is a configurable
 example, not an automatic discovery result. Prefer an already configured working
-Unreal connection. For a personal endpoint, open the plugin page, try it in chat
-and send its first
-suggestion, **配置 Unreal MCP 地址**. Enter the URL for the editor you intend
-to use. The [endpoint helper](../scripts/configure_endpoint.py) uses Python 3
-and the desktop Codex CLI to save just `mcp_servers.unreal-mcp.url` in the
-user's Codex settings. This applies across local projects unless a higher-priority
-setting overrides it, and remains in MCP settings after the plugin is removed.
-The bundled URL stays available as the installation default.
-The helper backs up an existing settings file on change, preserves other fields,
-and rejects a transport or authentication conflict. After saving, reconnect or
-open a new local chat. The editor's listening port is configured separately.
+Unreal connection. For a personal endpoint, open the plugin page > Manage >
+`unreal-mcp-settings` (Unreal MCP 地址设置). Edit **Unreal MCP 地址** in the
+native form and press Enter or leave the field to save. No chat is required.
+
+The additional local stdio [settings server](../scripts/settings_server.py)
+advertises the official [`openai/settings` extension](https://developers.openai.com/plugins/build/extensions).
+The host renders the input and calls its read/update tools directly. Python 3
+and a desktop host supporting structured MCP settings are required. The service
+works independently of the editor's HTTP connection, including while UE is
+offline. It does not proxy editor tools.
+
+The [endpoint helper](../scripts/configure_endpoint.py) uses Codex's configuration
+API to save only `mcp_servers.unreal-mcp.url` in user settings. This applies
+across local projects unless a higher-priority setting overrides it, and remains
+configured after removing the plugin. The bundled URL remains the installation
+default. The helper backs up the existing config on change, preserves other
+fields, rejects authentication/transport conflicts, and verifies the saved URL.
+On Windows, it uses the launching Codex executable when MCP's filtered environment
+omits the desktop CLI variable. The settings service recovers its profile from
+the installed `PLUGIN_ROOT` cache layout; an unknown layout is an error, not a
+reason to write another profile. Other operating systems are unverified.
+
+After saving, reconnect MCP or open a new local chat. Restart Codex if a plugin
+upgrade has not refreshed its settings service. Configure the editor's listening
+port separately.
 Do not silently disable or duplicate a working user-level connection. If another
 connection also targets the editor, use one explicitly; removing a duplicate is
 a user-directed action.

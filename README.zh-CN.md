@@ -2,7 +2,7 @@
 
 [English](README.md) | 简体中文
 
-当前插件版本：**0.1.3**。协作约定见 [AGENTS.md](AGENTS.md)，变更与验证记录见 [CHANGELOG.md](CHANGELOG.md)。
+当前插件版本：**0.1.4**。协作约定见 [AGENTS.md](AGENTS.md)，变更与验证记录见 [CHANGELOG.md](CHANGELOG.md)。
 
 这是基于 Epic Games 官方技能仓库制作的通用桌面适配版，不是 Epic/OpenAI 官方发行版。
 保留三个技能及官方工具开发示例，目标是 ChatGPT 统一桌面端的本机会话。
@@ -18,7 +18,7 @@
 
 ## 先看验证范围
 
-0.1.3 已在隔离的桌面版 Codex 用户配置中验证安装、个人地址保存与重新读取。本次没有在桌面界面点击入口或连接实际 UE 工程。
+0.1.4 已在 Windows、Python 3.11、Codex 0.166.0-alpha.6 的隔离配置中验证安装。真实 Codex 宿主识别了 `openai/settings`，并成功调用原生表单的读取和保存工具；地址回读、无效输入、备份、其他配置保留及认证保护通过。尚未实际点击桌面表单或连接 UE 工程，其他操作系统未验证。
 
 2026-10-27 已确认现有 0.1.1 安装加载了三个技能和 Unreal MCP 工具。
 文档修改前，源码插件目录与已安装缓存内容一致；实际调用 `list_toolsets`、
@@ -69,11 +69,13 @@ MCP 服务键仍为 `unreal-mcp`，安装时注意避免无意同时启用两份
 端口和 URL 路径。使用自定义端口、多个编辑器或代理时，不应假设默认示例适用。
 已有可用连接优先。下面的配置流程会在你提交地址后保存个人设置。
 
-打开插件详情页，点 **在聊天中试用（Try in chat）**，发送首条建议 **配置 Unreal MCP 地址**。如果客户端没有显示建议，在本机会话里选中插件并发送同一句话即可。
+打开插件详情页 → **管理** → **unreal-mcp-settings（Unreal MCP 地址设置）**，在原生设置表单中修改地址，无需进入聊天。页面通过官方 [`openai/settings` 扩展](https://developers.openai.com/plugins/build/extensions) 提供输入框。
 
-1. Codex 会显示当前使用的地址。输入要保存的完整地址，例如 `http://127.0.0.1:9000/mcp`。
-2. 插件使用 Python 3 和桌面版 Codex，只更新个人设置 `mcp_servers.unreal-mcp.url`，写入前备份已有配置，保存后回读有效地址。已配置认证或使用其他传输方式的同名连接，请在 Codex 的 MCP 服务器设置中处理。
+1. 在 **Unreal MCP 地址** 输入框填写完整地址，例如 `http://127.0.0.1:9000/mcp`；按 Enter 或移开焦点保存。
+2. 本地设置服务需要 Python 3 和支持原生 MCP 设置的桌面版 Codex；UE 未启动时也能配置。只更新个人设置 `mcp_servers.unreal-mcp.url`，写入前备份，保存后回读。已有认证或其他传输方式的同名连接会拒绝修改，避免误改连接目标。
 3. 重新连接 MCP，或新开本地聊天。个人地址适用于本机多个项目，插件更新后也会沿用。卸载插件后，这条用户连接仍可在 Codex 的 MCP 服务器设置中管理。UE 端的监听地址需单独设置。
+
+`unreal-mcp` 负责连接编辑器；新增的 `unreal-mcp-settings` 只提供地址设置。若升级后未出现后者，重启 Codex 以刷新已安装插件；它不是 UE 编辑器插件。
 本插件不会扫描任意端口来猜测连接，也不会把默认示例声称为自动发现的结果。
 
 ## 编译与保存
@@ -86,7 +88,7 @@ MCP 服务键仍为 `unreal-mcp`，安装时注意避免无意同时启用两份
 
 上游：https://github.com/EpicGames/unreal-engine-skills-for-claude-code-plugin
 上游快照：`a6aa73ada02a9fb1f5415bec491f9942c519b297`，原插件清单版本 3.1.1。
-当前适配版：0.1.3。完整来源说明见插件内 `UPSTREAM.md`；逐文件文本差异见
+当前适配版：0.1.4。完整来源说明见插件内 `UPSTREAM.md`；逐文件文本差异见
 本包 `upstream-changes.diff`。技能脚本没有增加额外编译执行器。
 
 ## 项目结构与维护
