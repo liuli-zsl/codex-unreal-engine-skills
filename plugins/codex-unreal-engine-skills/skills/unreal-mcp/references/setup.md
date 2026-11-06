@@ -56,10 +56,20 @@ when diagnosing a discrepancy.
 The portable plugin's root `mcp.json` declares a Streamable HTTP connection using
 UE's official first-setup default `http://127.0.0.1:8000/mcp`. This is a configurable
 example, not an automatic discovery result. Prefer an already configured working
-Unreal connection. For a custom endpoint, update the plugin connection and its
-skill dependency metadata together before installation or configuration refresh.
-Do not silently disable or duplicate a working user-level connection. If the host
-shows both, use one explicitly; removing a duplicate is a user-directed action.
+Unreal connection. For a personal endpoint, open the plugin page, try it in chat
+and send its first
+suggestion, **配置 Unreal MCP 地址**. Enter the URL for the editor you intend
+to use. The [endpoint helper](../scripts/configure_endpoint.py) uses Python 3
+and the desktop Codex CLI to save just `mcp_servers.unreal-mcp.url` in the
+user's Codex settings. This applies across local projects unless a higher-priority
+setting overrides it, and remains in MCP settings after the plugin is removed.
+The bundled URL stays available as the installation default.
+The helper backs up an existing settings file on change, preserves other fields,
+and rejects a transport or authentication conflict. After saving, reconnect or
+open a new local chat. The editor's listening port is configured separately.
+Do not silently disable or duplicate a working user-level connection. If another
+connection also targets the editor, use one explicitly; removing a duplicate is
+a user-directed action.
 
 If the host requires direct configuration, its Settings > MCP servers > Add
 server supports Streamable HTTP with the same URL. The local UE server has no

@@ -1,6 +1,6 @@
 # Unreal Engine Skills for Codex
 
-当前版本：**0.1.2**。基于 Epic Games 的 Unreal Engine Skills for Claude Code 上游 3.1.1，面向本机 ChatGPT/Codex 会话；本包为非官方适配版。
+当前版本：**0.1.3**。基于 Epic Games 的 Unreal Engine Skills for Claude Code 上游 3.1.1，面向本机 ChatGPT/Codex 会话；本包为非官方适配版。
 
 ## 包含的技能
 
@@ -10,10 +10,10 @@
 
 连接声明见 [mcp.json](mcp.json)，技能位于 [skills/](skills/)。
 随包地址 `http://127.0.0.1:8000/mcp` 是初次配置示例，使用时以目标编辑器实际地址和已有连接为准。
-修改地址还需核对 [技能依赖元数据](skills/unreal-mcp/agents/openai.yaml)。
+在插件详情页点 **在聊天中试用（Try in chat）**，发送首条建议 **配置 Unreal MCP 地址**，按提示输入 UE 编辑器的完整地址。个人设置保存在 Codex 用户配置里，重新连接或新开本机会话后使用。
 
 插件标识为 `codex-unreal-engine-skills`，显示名称为 `Unreal Engine Skills for Codex`。
-0.1.2 是源码命名更新，现有旧标识安装不会自动迁移；本版尚未安装验证。
+0.1.2 更新了源码命名。0.1.3 在隔离的 Codex 用户配置中验证了安装和地址切换。
 
 ## 验证状态
 

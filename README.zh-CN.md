@@ -2,7 +2,7 @@
 
 [English](README.md) | 简体中文
 
-当前插件版本：**0.1.2**。协作约定见 [AGENTS.md](AGENTS.md)，变更与验证记录见 [CHANGELOG.md](CHANGELOG.md)。
+当前插件版本：**0.1.3**。协作约定见 [AGENTS.md](AGENTS.md)，变更与验证记录见 [CHANGELOG.md](CHANGELOG.md)。
 
 这是基于 Epic Games 官方技能仓库制作的通用桌面适配版，不是 Epic/OpenAI 官方发行版。
 保留三个技能及官方工具开发示例，目标是 ChatGPT 统一桌面端的本机会话。
@@ -17,6 +17,8 @@
 - 原始 MIT 许可证、上游版本记录、可检查的源码，以及本地插件目录。
 
 ## 先看验证范围
+
+0.1.3 已在隔离的桌面版 Codex 用户配置中验证安装、个人地址保存与重新读取。本次没有在桌面界面点击入口或连接实际 UE 工程。
 
 2026-10-27 已确认现有 0.1.1 安装加载了三个技能和 Unreal MCP 工具。
 文档修改前，源码插件目录与已安装缓存内容一致；实际调用 `list_toolsets`、
@@ -34,7 +36,7 @@ UE 编译或其他平台。本目录是源码整理副本，修改文档不等�
 源码根目录和可安装插件子目录均使用新名称。
 
 现有 0.1.1 安装仍保留原标识与缓存，源码改名不会自动更新它。
-后续需从新目录安装并单独验证；当前未验证 0.1.2 的客户端安装和加载。
+升级时从新目录安装并单独验证连接。
 MCP 服务键仍为 `unreal-mcp`，安装时注意避免无意同时启用两份插件连接。
 
 ## 本地安装方式
@@ -43,8 +45,7 @@ MCP 服务键仍为 `unreal-mcp`，安装时注意避免无意同时启用两份
 2. 在 ChatGPT 桌面端的 Codex/本机模式中，将
    `codex-unreal-engine-skills` 文件夹添加为一个项目并打开。
    这个文件夹是本地插件目录的根，包含 `.agents/plugins/marketplace.json`。
-3. 安装前核对 UE 实际 MCP 地址。已有自定义地址时，保留已有连接；如要使用
-   插件自带连接，先同步调整下文列出的两个配置文件，不要用示例覆盖现有配置。
+3. 在目标 UE 编辑器中确认 MCP 监听端口和路径，记下完整地址。
 4. 重启桌面端。打开 Plugins Directory / 插件目录，选择本地来源
    `Codex Unreal Engine Skills Local`，安装 `Unreal Engine Skills for Codex`。
    实际入口名称可能随客户端语言、版本和工作区策略变化。
@@ -66,16 +67,13 @@ MCP 服务键仍为 `unreal-mcp`，安装时注意避免无意同时启用两份
 
 先读取已存在且可用的 `unreal-mcp` 连接，再核对目标 UE 编辑器的 MCP 启动日志、
 端口和 URL 路径。使用自定义端口、多个编辑器或代理时，不应假设默认示例适用。
-本包不会自动改写这些用户配置。插件自带声明可能与手动连接同时出现；
-此时明确选用一个进行只读验证，不自动停用另一个，也不覆盖全局 `config.toml`。
+已有可用连接优先。下面的配置流程会在你提交地址后保存个人设置。
 
-首次配置时可以采用 UE 官方默认值。已有地址不同时，核对实际监听地址并同步修改：
+打开插件详情页，点 **在聊天中试用（Try in chat）**，发送首条建议 **配置 Unreal MCP 地址**。如果客户端没有显示建议，在本机会话里选中插件并发送同一句话即可。
 
-- `plugins/codex-unreal-engine-skills/mcp.json`
-- `plugins/codex-unreal-engine-skills/skills/unreal-mcp/agents/openai.yaml`
-
-然后刷新/重装插件让客户端读取新配置。技能中的默认值仅用于首次配置示例；
-运行时以用户明确指定的地址、已有可用连接和目标编辑器的当前设置为准。
+1. Codex 会显示当前使用的地址。输入要保存的完整地址，例如 `http://127.0.0.1:9000/mcp`。
+2. 插件使用 Python 3 和桌面版 Codex，只更新个人设置 `mcp_servers.unreal-mcp.url`，写入前备份已有配置，保存后回读有效地址。已配置认证或使用其他传输方式的同名连接，请在 Codex 的 MCP 服务器设置中处理。
+3. 重新连接 MCP，或新开本地聊天。个人地址适用于本机多个项目，插件更新后也会沿用。卸载插件后，这条用户连接仍可在 Codex 的 MCP 服务器设置中管理。UE 端的监听地址需单独设置。
 本插件不会扫描任意端口来猜测连接，也不会把默认示例声称为自动发现的结果。
 
 ## 编译与保存
@@ -88,7 +86,7 @@ MCP 服务键仍为 `unreal-mcp`，安装时注意避免无意同时启用两份
 
 上游：https://github.com/EpicGames/unreal-engine-skills-for-claude-code-plugin
 上游快照：`a6aa73ada02a9fb1f5415bec491f9942c519b297`，原插件清单版本 3.1.1。
-当前适配版：0.1.2。完整来源说明见插件内 `UPSTREAM.md`；逐文件文本差异见
+当前适配版：0.1.3。完整来源说明见插件内 `UPSTREAM.md`；逐文件文本差异见
 本包 `upstream-changes.diff`。技能脚本没有增加额外编译执行器。
 
 ## 项目结构与维护
@@ -101,7 +99,7 @@ MCP 服务键仍为 `unreal-mcp`，安装时注意避免无意同时启用两份
 | [`CHANGELOG.md`](CHANGELOG.md) | 实际变更、验证证据与未验证范围。 |
 | [`VALIDATION.json`](VALIDATION.json)、[`upstream-changes.diff`](upstream-changes.diff) | 0.1.1 制作时的历史验证与技能差异材料。 |
 
-后续独立修改按 AGENTS.md 同步版本和文档；本次命名统一版本为 0.1.2。
+后续独立修改按 AGENTS.md 同步版本和文档。
 
 ## 许可证
 
