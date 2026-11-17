@@ -13,7 +13,7 @@ not a reliable root marker. Do not edit an unrelated project.
 
 ## 2. Enable the server and tools
 
-In UE 5.8, enable `Unreal MCP` (`ModelContextProtocol`) and `All Toolsets`
+In UE 5.8 and 5.9 Preview, check `Unreal MCP` (`ModelContextProtocol`) and `All Toolsets`
 (`AllToolsets`) through Edit > Plugins. Individual toolset plugins may replace
 the aggregate when a narrower surface is wanted. The registry dependency is
 enabled automatically. Restart only as part of an authorized setup action.
@@ -24,10 +24,17 @@ Enabling only the transport does not guarantee the required toolsets are loaded.
 ## 3. Start the intended endpoint
 
 Read the intended editor's existing settings and startup logs first. Preserve
-its port and URL path. For a new setup only, UE's official defaults are:
+its port and URL path. UE 5.8 documents auto-start as off by default. In 5.9
+Preview it defaults to on, under Editor Preferences > Agentic Workflows > Model
+Context Protocol. In the example below use the section for your engine and
+put the three values under that section.
+
+| Engine | Section in `EditorPerProjectUserSettings.ini` |
+| --- | --- |
+| UE 5.8 | `[/Script/ModelContextProtocolEngine.ModelContextProtocolSettings]` |
+| UE 5.9 Preview | `[/Script/ModelContextProtocol.ModelContextProtocolSettings]` |
 
 ```ini
-[/Script/ModelContextProtocolEngine.ModelContextProtocolSettings]
 bAutoStartServer=True
 ServerPortNumber=8000
 ServerUrlPath=/mcp
@@ -104,6 +111,17 @@ replacement. `ModelContextProtocol.GenerateClientConfig Codex` is optional and
 is not needed when the plugin or existing client configuration already works.
 The engine writer can refuse to overwrite an existing TOML file. Inspect and
 merge only requested entries; never delete unrelated configuration to force it.
+
+## Several editors on the same machine
+
+Give each concurrently running editor a fixed port via its project preferences
+or the launch argument `-ModelContextProtocolPort=<port>`. A second editor
+cannot bind the same address and port. A client using the first port will keep
+reaching the first editor. The plugin settings form saves one user-level URL
+across projects. For simultaneous connections, configure distinct MCP server
+entries in the client or use workspace-specific overrides. Switching Git
+branches does not select an editor. [Verify the instance](operations.md#identify-the-editor)
+through the intended connection.
 
 ## 5. Verify the actual state
 

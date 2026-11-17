@@ -44,18 +44,22 @@ or write errors honestly; do not rewrite the plugin cache to force a value.
 
 ## Discover, then dispatch
 
-1. Call `list_toolsets`, or go directly to `describe_toolset` when the relevant
-   toolset is already clear. Read its current input and output schemas.
-2. Call the advertised dispatcher `call_tool` with `toolset_name`, `tool_name`,
-   and an `arguments` object matching that schema. Domain tools are not necessarily
-   exposed as separate native MCP tools.
-3. Omit `toolset_name` only for a tool registered directly on the MCP server.
-   Never recursively dispatch `call_tool` through itself.
-4. Serialize live Unreal calls. Check each response before issuing the next call,
-   particularly for mutations and operations that share editor state.
+Inspect the connected server's advertised tools. Use `list_toolsets` when you
+need to find the toolset. Follow the route the server offers:
 
-Tool-search mode normally exposes only `list_toolsets`, `describe_toolset`, and
-`call_tool`; three meta-tools do not mean Unreal has only three operations.
+| Advertised tools | How to obtain the schema |
+| --- | --- |
+| `describe_toolset` (UE 5.8) | Pass the exact toolset name in `toolset_name`. Read the selected tool's schema. |
+| `describe_toolsets` and `describe_tools` (UE 5.9 Preview) | List tools with `toolset_names` (an array). For a known tool, pass its qualified name in the `tool_names` array to `describe_tools`. To fetch schemas for a whole toolset, pass `include_schemas: true` to `describe_toolsets`. |
+| Domain tool exposed directly (tool search disabled) | Read its advertised schema and call its native handle directly. |
+
+In tool-search mode, use `call_tool` with the returned toolset name in
+`toolset_name`, the member name in `tool_name`, and an `arguments` object matching
+the tool's schema. Omit `toolset_name` for a top-level tool. Never dispatch
+`call_tool` through itself. Serialize calls and check each response.
+
+When multiple editors are open, confirm which project and engine this session
+reaches before changing editor state. See [instance identification](references/operations.md#identify-the-editor).
 
 ## Load relevant Unreal Agent Skills
 

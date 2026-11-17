@@ -2,7 +2,11 @@
 
 [English](README.md) | 简体中文
 
-当前插件版本：**0.1.5**。协作约定见 [AGENTS.md](AGENTS.md)，变更与验证记录见 [CHANGELOG.md](CHANGELOG.md)。
+当前插件版本 **0.1.6**。协作约定见 [AGENTS.md](AGENTS.md)，变更与验证记录见 [CHANGELOG.md](CHANGELOG.md)。
+
+`main` 维护最新适配，同时覆盖 UE 5.8 与 5.9 Preview。`5.8`、`5.9` 分支分别维护对应的引擎版本。
+
+UE 5.8 用 `describe_toolset` 查询工具参数，5.9 Preview 用 `describe_toolsets` 或 `describe_tools`。插件按当前编辑器实际提供的工具选择流程。多个编辑器并行时，为各实例分配独立端口，并核对当前连接的工程。[工具调用流程](plugins/codex-unreal-engine-skills/skills/unreal-mcp/SKILL.md) · [连接配置](plugins/codex-unreal-engine-skills/skills/unreal-mcp/references/setup.md)
 
 这是基于 Epic Games 官方技能仓库制作的通用桌面适配版，不是 Epic/OpenAI 官方发行版。
 保留三个技能及官方工具开发示例，目标是 ChatGPT 统一桌面端的本机会话。
@@ -17,6 +21,8 @@
 - 原始 MIT 许可证、上游版本记录、可检查的源码，以及本地插件目录。
 
 ## 先看验证范围
+
+0.1.6 已对照 UE 5.8.4 和 5.9 Preview 的源码及配置核对工具名称、参数和配置节，通过清单、链接和技能入口静态检查。本版的安装和编辑器只读调用尚未验证。
 
 0.1.5 已在 Windows、Python 3.11、Codex 0.166.0-alpha.6 隔离配置中安装，并通过真实 Codex 宿主验证三项独立读写、恢复默认值及回读、21 种非法输入、端口边界、IPv6、HTTPS/主机名保留、错误地址恢复、备份、其他配置与禁用状态保留及认证保护。新版表单尚未实际点击，未连接 UE 工程，其他操作系统未验证。
 
@@ -93,9 +99,7 @@ MCP 服务键仍为 `unreal-mcp`，安装时注意避免无意同时启用两份
 ## 来源与差异
 
 上游：https://github.com/EpicGames/unreal-engine-skills-for-claude-code-plugin
-上游快照：`a6aa73ada02a9fb1f5415bec491f9942c519b297`，原插件清单版本 3.1.1。
-当前适配版：0.1.5。完整来源说明见插件内 `UPSTREAM.md`；逐文件文本差异见
-本包 `upstream-changes.diff`。技能脚本没有增加额外编译执行器。
+本次同步上游 3.1.2（`0e27bde2b55c5d3f6948532f4296aaa3654d8f4b`）的多编辑器指引。5.8 与 5.9 的调用差异另行对照 Epic 引擎文档和源码核实。完整来源见 [UPSTREAM.md](plugins/codex-unreal-engine-skills/UPSTREAM.md)。`upstream-changes.diff` 保留 0.1.1 制作时的差异。
 
 ## 项目结构与维护
 

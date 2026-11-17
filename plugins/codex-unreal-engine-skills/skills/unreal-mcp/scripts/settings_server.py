@@ -18,7 +18,7 @@ sys.dont_write_bytecode = True
 from configure_endpoint import codex_cli, effective_server, endpoint, save_url
 
 
-VERSION = "0.1.5"
+VERSION = "0.1.6"
 READ_TOOL = "read_settings"
 UPDATE_TOOL = "update_settings"
 RESET_TOOL = "reset_defaults"

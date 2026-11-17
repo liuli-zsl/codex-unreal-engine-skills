@@ -4,7 +4,11 @@ English | [简体中文](README.zh-CN.md)
 
 An unofficial desktop adaptation of Epic Games' [Unreal Engine Skills for Claude Code](https://github.com/EpicGames/unreal-engine-skills-for-claude-code-plugin), for local ChatGPT/Codex sessions. It packages client-side skills and an MCP connection to a running Unreal Editor.
 
-Plugin ID: `codex-unreal-engine-skills`. Version: **0.1.5**. Upstream snapshot: **3.1.1**, commit `a6aa73ada02a9fb1f5415bec491f9942c519b297`.
+Plugin ID: `codex-unreal-engine-skills`. Version: **0.1.6**. Based on Epic’s **3.1.2**, commit `0e27bde2b55c5d3f6948532f4296aaa3654d8f4b`.
+
+`main` tracks the latest adaptation for UE 5.8 and 5.9 Preview. The `5.8` and `5.9` branches track their respective engine lines.
+
+Use the tool catalog from the connected editor. UE 5.8 exposes `describe_toolset`. UE 5.9 Preview exposes `describe_toolsets` and `describe_tools`. When several editors are open, use distinct ports and verify the target project. See the [MCP skill](plugins/codex-unreal-engine-skills/skills/unreal-mcp/SKILL.md) and [setup guide](plugins/codex-unreal-engine-skills/skills/unreal-mcp/references/setup.md).
 
 ## Included skills
 
@@ -38,7 +42,9 @@ With the intended editor and its MCP server running, ask:
 
 > Use unreal-mcp to read the currently selected level actors without modifying the project.
 
-Discover live schemas with `list_toolsets` and `describe_toolset`, then use `call_tool` to dispatch the read operation. An empty selection is valid.
+Inspect the advertised schema, dispatch the read and check the result. An empty selection is valid.
+
+For 0.1.6, discovery names, parameters and configuration sections were checked against UE 5.8.4 and 5.9 Preview source and configuration. Package manifests, links and skill entries passed static checks. Installation and a live editor call remain unverified for this version.
 
 Version 0.1.5 was installed in an isolated Windows desktop CLI profile (Codex 0.166.0-alpha.6, Python 3.11). The actual host discovered `openai/settings` and successfully called read, partial update and reset tools. Independent field edits, reset persistence, 21 invalid inputs, port boundaries, IPv6, existing HTTPS/hostname URLs, damaged-URL recovery, backups, unchanged sibling settings, authentication protection and disabled-state preservation passed. Desktop clicks/rendering and a live editor call were not part of this check; other operating systems are unverified. The settings process resolves its installed Codex profile from `PLUGIN_ROOT` and uses the launching desktop CLI on Windows, avoiding an unrelated older CLI on PATH.
 

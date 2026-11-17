@@ -17,15 +17,10 @@ Run these from the Unreal Editor console (`~`) only when the task authorizes ser
 
 `tools/list` has two modes, controlled by the `bEnableToolSearch` UPROPERTY on `UModelContextProtocolSettings` (default `true`):
 
-- **`True`** (default): `tools/list` returns only `list_toolsets`, `describe_toolset`, `call_tool`. Toolset tools are dispatched server-side through `call_tool` and stay out of the prompt; the catalog never changes mid-session, so the prompt cache stays warm.
+- **`True`** (default): discover toolsets and dispatch through `call_tool`. The schema lookup differs between UE 5.8 and 5.9 Preview. Follow the [discovery workflow](../SKILL.md#discover-then-dispatch) for the advertised tools.
 - **`False`**: every toolset tool is registered as a native MCP tool at startup, schemas visible upfront. Used by the hash-mapping commandlet.
 
-Override in the same `.ini` used for `bAutoStartServer`:
-
-```ini
-[/Script/ModelContextProtocolEngine.ModelContextProtocolSettings]
-bEnableToolSearch=False
-```
+To disable tool search, set `bEnableToolSearch=False` in the [settings section for the target engine](setup.md#3-start-the-intended-endpoint).
 
 ## Proxy recovery
 
@@ -38,6 +33,17 @@ With the optional proxy, the client connects to `unreal-mcp-proxy` instead of di
 - Killing the proxy closes the client's STDIO connection. `Transport closed` then needs client reconnection; starting an unrelated proxy process cannot repair that connection. Ask before stopping active proxies.
 
 If calls still fail, check the editor's MCP startup log, the configured endpoint, and proxy stderr. With multiple editors, identify which process owns the configured port. A running editor alone does not prove that the proxy targets its MCP server. Follow the actual installed plugin or client configuration entry and the engine's `Extras/Proxy/README.md` for your build's transport limits.
+
+## Identify the editor
+
+When available, inspect `_meta["com.epicgames.unrealengine/instance"]` in the
+MCP `initialize` response (also available via `server/discover` on supported
+protocol versions). Match the reported project directory, engine directory and
+process ID to the intended editor. If the client might have retained an earlier
+connection, use its advertised Python execution tool, when available, to read
+`os.getpid()` in that session and compare it with the reported ID. On older
+builds, check the process that owns the configured port and its executable and
+project command line. Resolve a mismatch before editing.
 
 ## Troubleshooting matrix
 
