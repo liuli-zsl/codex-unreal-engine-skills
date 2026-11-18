@@ -6,7 +6,18 @@ An unofficial desktop adaptation of Epic Games' [Unreal Engine Skills for Claude
 
 Plugin ID: `codex-unreal-engine-skills`. Version: **0.1.6**. Based on Epic’s **3.1.2**, commit `0e27bde2b55c5d3f6948532f4296aaa3654d8f4b`.
 
-`main` tracks the latest adaptation for UE 5.8 and 5.9 Preview. The `5.8` and `5.9` branches track their respective engine lines.
+## Install from GitHub
+
+For most users, install from `main` with the Codex CLI. The plugin’s connection settings use Python 3, available as `python`.
+
+```sh
+codex plugin marketplace add https://github.com/liuli-zsl/codex-unreal-engine-skills.git --ref main
+codex plugin add codex-unreal-engine-skills@codex-unreal-engine-skills-local
+```
+
+Open the target project in Unreal Editor, enable **Unreal MCP** and the toolsets you need (or **All Toolsets**), and confirm that the MCP server is listening. In a local Codex chat, ask “Read the selected level actors using Unreal MCP.” A successful response with an empty list means no actors are selected. If you use a custom address, set it under **Settings → Unreal Editor 连接** in the plugin details.
+
+To follow an engine-specific maintenance branch, replace `main` with `5.8` or `5.9` in the first command. To install this release by tag, use `--ref v0.1.6`.
 
 Use the tool catalog from the connected editor. UE 5.8 exposes `describe_toolset`. UE 5.9 Preview exposes `describe_toolsets` and `describe_tools`. When several editors are open, use distinct ports and verify the target project. See the [MCP skill](plugins/codex-unreal-engine-skills/skills/unreal-mcp/SKILL.md) and [setup guide](plugins/codex-unreal-engine-skills/skills/unreal-mcp/references/setup.md).
 
@@ -38,13 +49,14 @@ An existing 0.1.1 installation retains its old identity and cached files. This s
 
 ## Verification
 
-With the intended editor and its MCP server running, ask:
+Version 0.1.6 was checked on Windows with Codex CLI `0.169.0-alpha.11.1`.
 
-> Use unreal-mcp to read the currently selected level actors without modifying the project.
-
-Inspect the advertised schema, dispatch the read and check the result. An empty selection is valid.
-
-For 0.1.6, discovery names, parameters and configuration sections were checked against UE 5.8.4 and 5.9 Preview source and configuration. Package manifests, links and skill entries passed static checks. Installation and a live editor call remain unverified for this version.
+| Scope | Result |
+| --- | --- |
+| Local marketplace upgrade, 2026-11-17 | Codex reported 0.1.6 installed and enabled. All 15 installed files matched the source at the time of installation. The existing MCP address was preserved. |
+| GitHub installation, 2026-11-18 | A fresh Codex profile installed the plugin from the public marketplace and reported 0.1.6 enabled. |
+| UE 5.9 Preview, 2026-11-17 | A live read through `describe_tools` and `call_tool` succeeded. `EditorToolset.EditorAppToolset.GetSelectedActors` returned an empty selection. |
+| UE 5.8.4 | Discovery names, parameters and settings were checked against engine source and configuration. A live 0.1.6 editor call is still pending. |
 
 Version 0.1.5 was installed in an isolated Windows desktop CLI profile (Codex 0.166.0-alpha.6, Python 3.11). The actual host discovered `openai/settings` and successfully called read, partial update and reset tools. Independent field edits, reset persistence, 21 invalid inputs, port boundaries, IPv6, existing HTTPS/hostname URLs, damaged-URL recovery, backups, unchanged sibling settings, authentication protection and disabled-state preservation passed. Desktop clicks/rendering and a live editor call were not part of this check; other operating systems are unverified. The settings process resolves its installed Codex profile from `PLUGIN_ROOT` and uses the launching desktop CLI on Windows, avoiding an unrelated older CLI on PATH.
 
@@ -70,4 +82,4 @@ Follow [AGENTS.md](AGENTS.md) for version and documentation updates. Preserve ex
 
 ## License
 
-[MIT](plugins/codex-unreal-engine-skills/LICENSE), retaining Epic Games' copyright notice. This adaptation is not an official Epic Games or OpenAI distribution. See [UPSTREAM.md](plugins/codex-unreal-engine-skills/UPSTREAM.md).
+The repository and installable plugin carry the MIT license and Epic Games’ copyright notice. [Repository license](LICENSE) · [Bundled license](plugins/codex-unreal-engine-skills/LICENSE) · [Upstream attribution](plugins/codex-unreal-engine-skills/UPSTREAM.md)

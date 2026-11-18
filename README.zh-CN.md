@@ -4,12 +4,22 @@
 
 当前插件版本 **0.1.6**。协作约定见 [AGENTS.md](AGENTS.md)，变更与验证记录见 [CHANGELOG.md](CHANGELOG.md)。
 
-`main` 维护最新适配，同时覆盖 UE 5.8 与 5.9 Preview。`5.8`、`5.9` 分支分别维护对应的引擎版本。
+这是 Epic Games 官方 Claude Code 技能的非官方 Codex 适配版。它让本机 Codex 会话通过 MCP 操作 Unreal Editor，并提供工具集与技能开发示例。
+
+## 从 GitHub 安装
+
+日常使用选 `main`。安装需要 Codex CLI，插件的连接设置需要能通过 `python` 启动的 Python 3。
+
+```sh
+codex plugin marketplace add https://github.com/liuli-zsl/codex-unreal-engine-skills.git --ref main
+codex plugin add codex-unreal-engine-skills@codex-unreal-engine-skills-local
+```
+
+用 Unreal Editor 打开目标工程，启用 **Unreal MCP** 和需要的工具集（也可启用 **All Toolsets**），确认 MCP 服务已监听。在 Codex 本地聊天中输入“通过 Unreal MCP 读取当前选中的关卡 Actor”。调用成功且返回空列表，表示当前没有选中 Actor。使用自定义地址时，在插件详情页的 **设置 → Unreal Editor 连接** 中填写。
+
+需要跟踪某个引擎系列时，把第一行的 `main` 换成 `5.8` 或 `5.9`。需要固定安装本次发布版时，使用 `--ref v0.1.6`。
 
 UE 5.8 用 `describe_toolset` 查询工具参数，5.9 Preview 用 `describe_toolsets` 或 `describe_tools`。插件按当前编辑器实际提供的工具选择流程。多个编辑器并行时，为各实例分配独立端口，并核对当前连接的工程。[工具调用流程](plugins/codex-unreal-engine-skills/skills/unreal-mcp/SKILL.md) · [连接配置](plugins/codex-unreal-engine-skills/skills/unreal-mcp/references/setup.md)
-
-这是基于 Epic Games 官方技能仓库制作的通用桌面适配版，不是 Epic/OpenAI 官方发行版。
-保留三个技能及官方工具开发示例，目标是 ChatGPT 统一桌面端的本机会话。
 
 ## 包含什么
 
@@ -22,7 +32,14 @@ UE 5.8 用 `describe_toolset` 查询工具参数，5.9 Preview 用 `describe_too
 
 ## 先看验证范围
 
-0.1.6 已对照 UE 5.8.4 和 5.9 Preview 的源码及配置核对工具名称、参数和配置节，通过清单、链接和技能入口静态检查。本版的安装和编辑器只读调用尚未验证。
+0.1.6 在 Windows 上使用 Codex CLI `0.169.0-alpha.11.1` 验证。
+
+| 范围 | 结果 |
+| --- | --- |
+| 本地 marketplace 升级，2026-11-17 | Codex 确认 0.1.6 已安装并启用，15 个安装文件与当时源码一致，原有 MCP 地址保留。 |
+| 从 GitHub 安装，2026-11-18 | 使用空白 Codex 配置从公开 marketplace 安装，回读版本为 0.1.6，状态为已启用。 |
+| UE 5.9 Preview，2026-11-17 | 用 `describe_tools` 读取参数，通过 `call_tool` 调用 `EditorToolset.EditorAppToolset.GetSelectedActors` 成功，返回空列表。 |
+| UE 5.8.4 | 已对照引擎源码及配置核对工具名称、参数和配置节。0.1.6 的编辑器只读调用待验证。 |
 
 0.1.5 已在 Windows、Python 3.11、Codex 0.166.0-alpha.6 隔离配置中安装，并通过真实 Codex 宿主验证三项独立读写、恢复默认值及回读、21 种非法输入、端口边界、IPv6、HTTPS/主机名保留、错误地址恢复、备份、其他配置与禁用状态保留及认证保护。新版表单尚未实际点击，未连接 UE 工程，其他操作系统未验证。
 
@@ -115,6 +132,5 @@ MCP 服务键仍为 `unreal-mcp`，安装时注意避免无意同时启用两份
 
 ## 许可证
 
-沿用 [MIT 许可证](plugins/codex-unreal-engine-skills/LICENSE) 和 Epic Games 原署名。
-完整来源与适配说明见 [UPSTREAM.md](plugins/codex-unreal-engine-skills/UPSTREAM.md)。
+仓库和可安装插件均使用 MIT 许可证，保留 Epic Games 的原署名。[仓库许可证](LICENSE) · [随包许可证](plugins/codex-unreal-engine-skills/LICENSE) · [来源与适配说明](plugins/codex-unreal-engine-skills/UPSTREAM.md)
 本项目为非官方适配版。

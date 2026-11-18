@@ -6,7 +6,9 @@
 
 - `main` 根据实时工具列表覆盖 UE 5.8 和 5.9 Preview，并提供 `5.8`、`5.9` 版本维护分支。记录两个版本的 schema 查询方式、自动启动设置和 `.ini` 配置节差异。
 - 同步上游 3.1.2 的多编辑器固定端口、实例识别与进程核对流程。更新工具开发指引和 5.9 Preview 的 Markdown Agent Skill 入口。
-- 对照本地 UE 5.8.4、5.9 Preview 源码、基础配置和 Epic 文档，核对工具名称和参数。静态检查覆盖 JSON、版本、marketplace 目标、技能入口、示例保留与 Markdown 本地链接。此版本尚未完成安装或编辑器只读调用验收。
+- 对照本地 UE 5.8.4、5.9 Preview 源码、基础配置和 Epic 文档，核对工具名称和参数。静态检查覆盖 JSON、版本、marketplace 目标、技能入口、示例保留与 Markdown 本地链接。
+- 2026-11-17，Windows 上使用 Codex CLI `0.169.0-alpha.11.1` 从本地 marketplace 升级，确认 0.1.6 已安装并启用，15 个安装文件与当时源码一致，已有 MCP 地址保留。UE 5.9 Preview 实际只读调用 `EditorToolset.EditorAppToolset.GetSelectedActors` 成功，返回空列表。UE 5.8.4 的编辑器只读调用待验。
+- 2026-11-18，使用空白 Codex 配置从 GitHub 公开 marketplace 安装，回读版本为 0.1.6，状态为已启用。首次公开发布补充了中英文安装命令、分支选择说明，以及与随包文本相同的根目录 MIT 许可证。
 
 ## 0.1.5 — 2026-11-06
 
