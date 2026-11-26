@@ -2,9 +2,9 @@
 
 English | [简体中文](README.zh-CN.md)
 
-An unofficial desktop adaptation of Epic Games' [Unreal Engine Skills for Claude Code](https://github.com/EpicGames/unreal-engine-skills-for-claude-code-plugin), for local ChatGPT/Codex sessions. It packages client-side skills and an MCP connection to a running Unreal Editor.
+Use a local Codex session to inspect and edit a running Unreal Editor through MCP, or to author toolsets and Unreal Agent Skills. This is an unofficial adaptation of Epic Games' [Unreal Engine Skills for Claude Code](https://github.com/EpicGames/unreal-engine-skills-for-claude-code-plugin).
 
-Plugin ID: `codex-unreal-engine-skills`. Version: **0.1.6**. Based on Epic’s **3.1.2**, commit `0e27bde2b55c5d3f6948532f4296aaa3654d8f4b`.
+This checkout contains **0.1.7** of `codex-unreal-engine-skills`, based on Epic’s **3.1.2** at commit `0e27bde2b55c5d3f6948532f4296aaa3654d8f4b`.
 
 ## Install from GitHub
 
@@ -17,7 +17,7 @@ codex plugin add codex-unreal-engine-skills@codex-unreal-engine-skills-local
 
 Open the target project in Unreal Editor, enable **Unreal MCP** and the toolsets you need (or **All Toolsets**), and confirm that the MCP server is listening. In a local Codex chat, ask “Read the selected level actors using Unreal MCP.” A successful response with an empty list means no actors are selected. If you use a custom address, set it under **Settings → Unreal Editor 连接** in the plugin details.
 
-To follow an engine-specific maintenance branch, replace `main` with `5.8` or `5.9` in the first command. To install this release by tag, use `--ref v0.1.6`.
+To follow an engine-specific maintenance branch, replace `main` with `5.8` or `5.9` in the first command. To pin a published version, use its tag, for example `--ref v0.1.6`. [GitHub Releases](https://github.com/liuli-zsl/codex-unreal-engine-skills/releases)
 
 Use the tool catalog from the connected editor. UE 5.8 exposes `describe_toolset`. UE 5.9 Preview exposes `describe_toolsets` and `describe_tools`. When several editors are open, use distinct ports and verify the target project. See the [MCP skill](plugins/codex-unreal-engine-skills/skills/unreal-mcp/SKILL.md) and [setup guide](plugins/codex-unreal-engine-skills/skills/unreal-mcp/references/setup.md).
 
@@ -35,6 +35,8 @@ The adaptation adds desktop plugin and marketplace metadata, preserves the upstr
 
 This directory is the local marketplace root. Keep its hidden `.agents/` directory together with `plugins/`. The marketplace is named `codex-unreal-engine-skills-local` (display name **Codex Unreal Engine Skills Local**), and its plugin is **Unreal Engine Skills for Codex**.
 
+For a fresh installation from this checkout, run `codex plugin marketplace add .` in the repository root, then run the same `codex plugin add` command shown above.
+
 Open the plugin details page and find **Settings > Unreal Editor 连接**. Edit **IP**, **URL 路径** (URL path), and **端口号** (port) separately; press Enter or leave each field to save. Defaults are `127.0.0.1`, `/mcp`, and `8000`. The IP field also accepts IPv6 and hostnames. Ports must be integers from 1 to 65535; paths must start with `/` and contain no whitespace, query, or fragment. Invalid input is rejected without changing the saved address. **恢复默认值** (Restore defaults) saves `http://127.0.0.1:8000/mcp` in one action; reopen the page to refresh the displayed fields. Ordinary field edits preserve an existing HTTPS scheme. Opening or upgrading the plugin never resets a custom address. This uses the official [`openai/settings` extension](https://developers.openai.com/plugins/build/extensions), not a chat prompt. The local settings server needs Python 3 and a desktop Codex host supporting structured MCP settings. It works while Unreal is offline, backs up the existing user config, and changes only `mcp_servers.unreal-mcp.url`. Reconnect MCP or open a new local chat after saving.
 
 The user address applies across your local projects, survives a plugin update, and can also be managed in Codex MCP settings. The resulting user connection stays configured when the plugin is removed. The Unreal Editor must listen on the same address. The bundled first-install default is `http://127.0.0.1:8000/mcp`.
@@ -49,20 +51,13 @@ An existing 0.1.1 installation retains its old identity and cached files. This s
 
 ## Verification
 
-Version 0.1.6 was checked on Windows with Codex CLI `0.169.0-alpha.11.1`.
-
 | Scope | Result |
 | --- | --- |
-| Local marketplace upgrade, 2026-11-17 | Codex reported 0.1.6 installed and enabled. All 15 installed files matched the source at the time of installation. The existing MCP address was preserved. |
-| GitHub installation, 2026-11-18 | A fresh Codex profile installed the plugin from the public marketplace and reported 0.1.6 enabled. |
-| UE 5.9 Preview, 2026-11-17 | A live read through `describe_tools` and `call_tool` succeeded. `EditorToolset.EditorAppToolset.GetSelectedActors` returned an empty selection. |
-| UE 5.8.4 | Discovery names, parameters and settings were checked against engine source and configuration. A live 0.1.6 editor call is still pending. |
+| Windows installation from this checkout, 2026-11-26 | Codex CLI `0.171.0-alpha.13.2` installed and enabled 0.1.7 in a fresh profile. All 15 installed files matched the source. |
+| UE 5.9 Preview | On 2026-11-17, plugin 0.1.6 queried the live schema with `describe_tools` and called `GetSelectedActors` through `call_tool`. The editor returned an empty selection. |
+| UE 5.8.4 | Tool names, parameters and settings were checked against engine source and configuration for plugin 0.1.6. A live editor read is still pending. |
 
-Version 0.1.5 was installed in an isolated Windows desktop CLI profile (Codex 0.166.0-alpha.6, Python 3.11). The actual host discovered `openai/settings` and successfully called read, partial update and reset tools. Independent field edits, reset persistence, 21 invalid inputs, port boundaries, IPv6, existing HTTPS/hostname URLs, damaged-URL recovery, backups, unchanged sibling settings, authentication protection and disabled-state preservation passed. Desktop clicks/rendering and a live editor call were not part of this check; other operating systems are unverified. The settings process resolves its installed Codex profile from `PLUGIN_ROOT` and uses the launching desktop CLI on Windows, avoiding an unrelated older CLI on PATH.
-
-On **2026-10-27**, the existing 0.1.1 installation exposed all three skills and the MCP tools. At that time, its plugin files matched the 0.1.1 source copy before documentation changes. `list_toolsets`, `describe_toolset`, and `GetSelectedActors` succeeded; the latter returned one selected actor. This verifies the existing installation's read-only connection, not a clean installation, asset editing, compilation, or every toolset. See [CHANGELOG.md](CHANGELOG.md).
-
-[`VALIDATION.json`](VALIDATION.json) records checks from package preparation; it is a historical snapshot, not the current acceptance report.
+For detailed installation, settings and editor checks by version, see the [changelog](Docs/CHANGELOG.md).
 
 ## Project layout
 
@@ -73,12 +68,16 @@ On **2026-10-27**, the existing 0.1.1 installation exposed all three skills and 
 | [`plugin.json`](plugins/codex-unreal-engine-skills/plugin.json) | Plugin identity, version, and desktop metadata. |
 | [`skills/`](plugins/codex-unreal-engine-skills/skills/) | Three skills, metadata, and MCP references. |
 | [`UPSTREAM.md`](plugins/codex-unreal-engine-skills/UPSTREAM.md) | Upstream provenance and adaptation summary. |
-| [`upstream-changes.diff`](upstream-changes.diff) | Historical skill diff prepared for 0.1.1. |
-| [AGENTS.md](AGENTS.md) / [CHANGELOG.md](CHANGELOG.md) | Maintenance conventions and verified change history. |
+| [`VALIDATION.json`](VALIDATION.json) / [`upstream-changes.diff`](upstream-changes.diff) | Historical validation and skill diff prepared for 0.1.1. |
+| [AGENTS.md](AGENTS.md) / [Docs/CHANGELOG.md](Docs/CHANGELOG.md) | Maintenance conventions and verified change history. |
 
 ## Development and authorization
 
 Follow [AGENTS.md](AGENTS.md) for version and documentation updates. Preserve existing connection settings and user work. Compilation, Live Coding, and scripts that trigger compilation require explicit authorization. This package includes no build/test/cook runner.
+
+## Support
+
+liuli-zsl maintains this Codex adaptation. Report installation and connection problems in [GitHub Issues](https://github.com/liuli-zsl/codex-unreal-engine-skills/issues).
 
 ## License
 

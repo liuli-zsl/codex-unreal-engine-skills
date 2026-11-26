@@ -2,9 +2,9 @@
 
 [English](README.md) | 简体中文
 
-当前插件版本 **0.1.6**。协作约定见 [AGENTS.md](AGENTS.md)，变更与验证记录见 [CHANGELOG.md](CHANGELOG.md)。
-
 这是 Epic Games 官方 Claude Code 技能的非官方 Codex 适配版。它让本机 Codex 会话通过 MCP 操作 Unreal Editor，并提供工具集与技能开发示例。
+
+当前源码版本为 **0.1.7**。逐版改动和验证记录见[变更记录](Docs/CHANGELOG.md)。
 
 ## 从 GitHub 安装
 
@@ -17,7 +17,7 @@ codex plugin add codex-unreal-engine-skills@codex-unreal-engine-skills-local
 
 用 Unreal Editor 打开目标工程，启用 **Unreal MCP** 和需要的工具集（也可启用 **All Toolsets**），确认 MCP 服务已监听。在 Codex 本地聊天中输入“通过 Unreal MCP 读取当前选中的关卡 Actor”。调用成功且返回空列表，表示当前没有选中 Actor。使用自定义地址时，在插件详情页的 **设置 → Unreal Editor 连接** 中填写。
 
-需要跟踪某个引擎系列时，把第一行的 `main` 换成 `5.8` 或 `5.9`。需要固定安装本次发布版时，使用 `--ref v0.1.6`。
+需要跟踪某个引擎系列时，把第一行的 `main` 换成 `5.8` 或 `5.9`。要固定安装已发布的版本，使用对应标签，例如 `--ref v0.1.6`。[GitHub 发布记录](https://github.com/liuli-zsl/codex-unreal-engine-skills/releases)
 
 UE 5.8 用 `describe_toolset` 查询工具参数，5.9 Preview 用 `describe_toolsets` 或 `describe_tools`。插件按当前编辑器实际提供的工具选择流程。多个编辑器并行时，为各实例分配独立端口，并核对当前连接的工程。[工具调用流程](plugins/codex-unreal-engine-skills/skills/unreal-mcp/SKILL.md) · [连接配置](plugins/codex-unreal-engine-skills/skills/unreal-mcp/references/setup.md)
 
@@ -32,24 +32,13 @@ UE 5.8 用 `describe_toolset` 查询工具参数，5.9 Preview 用 `describe_too
 
 ## 先看验证范围
 
-0.1.6 在 Windows 上使用 Codex CLI `0.169.0-alpha.11.1` 验证。
-
 | 范围 | 结果 |
 | --- | --- |
-| 本地 marketplace 升级，2026-11-17 | Codex 确认 0.1.6 已安装并启用，15 个安装文件与当时源码一致，原有 MCP 地址保留。 |
-| 从 GitHub 安装，2026-11-18 | 使用空白 Codex 配置从公开 marketplace 安装，回读版本为 0.1.6，状态为已启用。 |
-| UE 5.9 Preview，2026-11-17 | 用 `describe_tools` 读取参数，通过 `call_tool` 调用 `EditorToolset.EditorAppToolset.GetSelectedActors` 成功，返回空列表。 |
-| UE 5.8.4 | 已对照引擎源码及配置核对工具名称、参数和配置节。0.1.6 的编辑器只读调用待验证。 |
+| Windows 本地源码安装，2026-11-26 | Codex CLI `0.171.0-alpha.13.2` 在空白配置中安装并启用 0.1.7，15 个安装文件均与源码一致。 |
+| UE 5.9 Preview | 2026-11-17 使用插件 0.1.6，以 `describe_tools` 查询参数后通过 `call_tool` 调用 `GetSelectedActors`，编辑器成功返回空列表。 |
+| UE 5.8.4 | 0.1.6 已对照引擎源码和配置核对工具名称、参数及配置节。编辑器只读调用仍待验证。 |
 
-0.1.5 已在 Windows、Python 3.11、Codex 0.166.0-alpha.6 隔离配置中安装，并通过真实 Codex 宿主验证三项独立读写、恢复默认值及回读、21 种非法输入、端口边界、IPv6、HTTPS/主机名保留、错误地址恢复、备份、其他配置与禁用状态保留及认证保护。新版表单尚未实际点击，未连接 UE 工程，其他操作系统未验证。
-
-2026-10-27 已确认现有 0.1.1 安装加载了三个技能和 Unreal MCP 工具。
-文档修改前，源码插件目录与已安装缓存内容一致；实际调用 `list_toolsets`、
-`describe_toolset` 和 `GetSelectedActors` 成功，返回一个选中 Actor。
-
-这证明该次现有安装的只读连接可用；未验证全新安装、所有技能自动触发、资产修改、
-UE 编译或其他平台。本目录是源码整理副本，修改文档不等于已更新已安装缓存。
-`VALIDATION.json` 保留制作时的历史检查结果，当前验证记录以 [CHANGELOG.md](CHANGELOG.md) 为准。
+各版本的安装、连接设置和编辑器调用详情见[变更记录](Docs/CHANGELOG.md)。
 
 ## 从旧名称迁移
 
@@ -63,6 +52,8 @@ UE 编译或其他平台。本目录是源码整理副本，修改文档不等�
 MCP 服务键仍为 `unreal-mcp`，安装时注意避免无意同时启用两份插件连接。
 
 ## 本地安装方式
+
+从本地源码首次安装时，可在仓库根目录运行 `codex plugin marketplace add .`，再运行上方的 `codex plugin add` 命令。使用桌面界面安装时按以下步骤操作。
 
 1. 获取完整的 `codex-unreal-engine-skills` 源码目录，保留 `.agents` 目录。
 2. 在 ChatGPT 桌面端的 Codex/本机模式中，将
@@ -116,7 +107,7 @@ MCP 服务键仍为 `unreal-mcp`，安装时注意避免无意同时启用两份
 ## 来源与差异
 
 上游：https://github.com/EpicGames/unreal-engine-skills-for-claude-code-plugin
-本次同步上游 3.1.2（`0e27bde2b55c5d3f6948532f4296aaa3654d8f4b`）的多编辑器指引。5.8 与 5.9 的调用差异另行对照 Epic 引擎文档和源码核实。完整来源见 [UPSTREAM.md](plugins/codex-unreal-engine-skills/UPSTREAM.md)。`upstream-changes.diff` 保留 0.1.1 制作时的差异。
+插件 0.1.6 同步了上游 3.1.2（`0e27bde2b55c5d3f6948532f4296aaa3654d8f4b`）的多编辑器指引。5.8 与 5.9 的调用差异另行对照 Epic 引擎文档和源码核实。完整来源见 [UPSTREAM.md](plugins/codex-unreal-engine-skills/UPSTREAM.md)。`upstream-changes.diff` 保留 0.1.1 制作时的差异。
 
 ## 项目结构与维护
 
@@ -125,10 +116,12 @@ MCP 服务键仍为 `unreal-mcp`，安装时注意避免无意同时启用两份
 | [`.agents/plugins/marketplace.json`](.agents/plugins/marketplace.json) | 本地 marketplace 入口。 |
 | [`plugins/codex-unreal-engine-skills/`](plugins/codex-unreal-engine-skills/) | 可安装插件根目录，包含清单、连接配置、技能和许可证。 |
 | [`AGENTS.md`](AGENTS.md) | 阅读顺序、版本同步和协作约定。 |
-| [`CHANGELOG.md`](CHANGELOG.md) | 实际变更、验证证据与未验证范围。 |
+| [`Docs/CHANGELOG.md`](Docs/CHANGELOG.md) | 各版本的实际变更、验证结果与待验证事项。 |
 | [`VALIDATION.json`](VALIDATION.json)、[`upstream-changes.diff`](upstream-changes.diff) | 0.1.1 制作时的历史验证与技能差异材料。 |
 
-后续独立修改按 AGENTS.md 同步版本和文档。
+## 维护与反馈
+
+本 Codex 适配版由 liuli-zsl 维护。安装或连接遇到问题，可在 [GitHub Issues](https://github.com/liuli-zsl/codex-unreal-engine-skills/issues) 反馈。
 
 ## 许可证
 
