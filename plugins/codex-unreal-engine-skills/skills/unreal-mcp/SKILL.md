@@ -63,10 +63,13 @@ reaches before changing editor state. See [instance identification](references/o
 
 ## Load relevant Unreal Agent Skills
 
-For unfamiliar project work, discover `AgentSkillToolset`, call `ListSkills`,
-and load relevant entries with `GetSkills`. These engine/project instruction
-bundles are separate from this desktop plugin's three client skills. Follow
-applicable project knowledge within the user's instructions and task scope.
+For a domain workflow, identify the target editor and its engine version first.
+Use the [versioned engine catalog](../unreal-engine-workflows/SKILL.md) for the
+matching series. Discover `AgentSkillToolset`, call `ListSkills`, then pass the
+relevant returned paths to `GetSkills`. The current registry determines which
+built-in and project-specific instructions are available. After switching
+editors, repeat discovery. If the version is unknown, resolve it before using
+version-specific instructions.
 
 ## Compilation and editor changes
 

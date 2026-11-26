@@ -1,14 +1,18 @@
 # Unreal Engine Skills for Codex
 
-当前版本 **0.1.7**。基于 Epic Games 的 Unreal Engine Skills for Claude Code 上游 3.1.2，面向本机 ChatGPT/Codex 会话。本包为非官方适配版。
+当前版本 **0.1.8**。基于 Epic Games 的 Unreal Engine Skills for Claude Code 上游 3.1.2，面向本机 ChatGPT/Codex 会话。本包为非官方适配版。
 
 插件按编辑器提供的工具选择 UE 5.8 或 5.9 Preview 查询流程。多个实例并行时，请核对各自的端口、进程和工程目录。
 
-## 包含的技能
+## 引擎工作流与桌面入口
 
-- `unreal-mcp`：查询和操作正在运行的 UE 编辑器。
-- `create-toolset`：开发或扩展 C++/Python MCP 工具。
-- `unreal-skill`：创建或编辑 UE 项目/插件内的 Agent Skill。
+| 来源 | UE 5.8 | UE 5.9 |
+| --- | --- | --- |
+| Epic 为 Claude Code 提供的 GitHub 技能 | `unreal-mcp` 操作编辑器，`create-toolset` 开发工具，`unreal-skill` 编写引擎技能。 | 同样三项，引擎另支持 Markdown 技能。 |
+| UE 安装自带的工作流 | [21 项共用技能](skills/unreal-engine-workflows/references/shared.csv)，包括蓝图、光照、材质、Niagara、Dataflow、布料转换和 PCG 资产。 | 共用 21 项，加上 [57 项 5.9 工作流](skills/unreal-engine-workflows/references/ue5.9.csv)，覆盖编辑器、UI、Sequencer、音频、渲染、变形、工具链、PCG 和 Wasm。 |
+| UE 5.9 宿主 | — | [Canvas 和 Assistant](skills/unreal-engine-workflows/references/canvas-assistant.md)。Canvas 有独立技能库及扩展编写技能，Assistant 使用编辑器注册表。 |
+
+本项目编写的 [`unreal-engine-workflows`](skills/unreal-engine-workflows/SKILL.md) 是第四个桌面入口。先核对目标引擎版本，再按当前编辑器返回的路径取完整指令。编辑器关闭时，按版本查随包指引或读取对应安装的文本定义。蓝图资产与项目动态正文通过在线编辑器读取。
 
 连接声明见 [mcp.json](mcp.json)，技能位于 [skills/](skills/)。
 随包地址 `http://127.0.0.1:8000/mcp` 是初次配置示例，使用时以目标编辑器实际地址和已有连接为准。
@@ -18,9 +22,7 @@
 
 ## 验证状态
 
-2026-11-26 在 Windows 空白 Codex 配置中从本地 marketplace 安装并启用了 0.1.7，15 个安装文件均与源码一致。
-
-2026-11-17 使用插件 0.1.6 在 UE 5.9 Preview 编辑器中调用 `GetSelectedActors` 成功，返回空列表。UE 5.8.4 已核对引擎源码和配置，编辑器只读调用仍待验证。
+2026-11-26 在 Windows 独立 Codex 配置中安装并启用了 0.1.8。已在 UE 5.8.4 和 5.9.0 核对 21 项和 78 项对应来源。5.8.4 临时工程的无界面 Commandlet 通过 MCP 返回蓝图基础正文。5.9 编辑器通过 MCP 返回蓝图基础、PCG 图生成资产和日志分析正文。
 
 ## 文档与来源
 

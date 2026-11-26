@@ -2,9 +2,9 @@
 
 [English](README.md) | 简体中文
 
-这是 Epic Games 官方 Claude Code 技能的非官方 Codex 适配版。它让本机 Codex 会话通过 MCP 操作 Unreal Editor，并提供工具集与技能开发示例。
+在 ChatGPT 桌面版的 Codex 本机会话中，通过 MCP 操作 Unreal Editor、读取目标版本的引擎技能，或开发工具集和 Agent Skill。本插件将 Epic 的 Claude Code 技能与引擎自带工作流接入桌面，为非官方适配版。
 
-当前源码版本为 **0.1.7**。逐版改动和验证记录见[变更记录](Docs/CHANGELOG.md)。
+当前版本 **0.1.8**，同一插件支持 **UE 5.8 和 5.9**。逐版改动和验证记录见[变更记录](Docs/CHANGELOG.md)。
 
 ## 从 GitHub 安装
 
@@ -21,22 +21,32 @@ codex plugin add codex-unreal-engine-skills@codex-unreal-engine-skills-local
 
 UE 5.8 用 `describe_toolset` 查询工具参数，5.9 Preview 用 `describe_toolsets` 或 `describe_tools`。插件按当前编辑器实际提供的工具选择流程。多个编辑器并行时，为各实例分配独立端口，并核对当前连接的工程。[工具调用流程](plugins/codex-unreal-engine-skills/skills/unreal-mcp/SKILL.md) · [连接配置](plugins/codex-unreal-engine-skills/skills/unreal-mcp/references/setup.md)
 
-## 包含什么
+## 技能来源与 UE 版本
 
-- `unreal-mcp`：查询和操作正在运行的 UE 编辑器。
-- `create-toolset`：开发或扩展 C++/Python MCP 工具。
-- `unreal-skill`：创建或编辑 UE 项目/插件内的 Agent Skill。
-- 首次配置示例：`http://127.0.0.1:8000/mcp`（UE 官方默认值，可修改）。
-- 已有连接和编辑器实际设置优先，不包含特定用户的端口、工程路径或补丁版本预设。
-- 原始 MIT 许可证、上游版本记录、可检查的源码，以及本地插件目录。
+同一份 `main` 插件同时支持 UE 5.8 和 5.9。前三个桌面技能适配自 Epic 为 Claude Code 发布的 MIT 开源插件。第四个入口 [`unreal-engine-workflows`](plugins/codex-unreal-engine-skills/skills/unreal-engine-workflows/SKILL.md) 由本项目编写，将引擎自带的工作流接入桌面聊天。清单中每项都标有提供它的引擎模块、源码位置和随包可读的操作指引。表格按引擎安装中自带的技能统计，项目还可以提供其他工具或技能。
+
+| 来源与工作流 | UE 5.8 可用 | UE 5.9 可用 |
+| --- | --- | --- |
+| Epic 官方 GitHub · `unreal-mcp` 操作编辑器，`create-toolset` 编写 MCP 工具，`unreal-skill` 编写引擎技能 | 三项均可用。引擎技能采用类或蓝图资产。 | 三项均可用。引擎也支持 Markdown 技能。 |
+| UE 自带 · 编辑器基础与 Niagara | 蓝图、室外光照、材质、技能编写。Niagara 基础、蓝图交互、清理、自定义 HLSL、关卡放置、优化、渲染器。 | 同左，共 11 项。 |
+| UE 自带 · Dataflow、Chaos Cloth、PCG 资产 | Dataflow 图编辑、布料转换。PCG 图生成、关卡批处理、资产陈列、Biome Core 配置与排错、网格实例化、网格分区、形状语法。 | 同左，共 10 项。 |
+| UE 自带 · 新增编辑器和 UI 工作流 | — | Actor 放置、资产差异比较、版本控制、UMG 基础、焦点导航、编辑器实用控件、运行时 UI 排错、MVVM 绑定、Slate 输入、控件动画、控件说明文档。 |
+| UE 自带 · Sequencer、音频、渲染与变形 | — | Sequencer 核心、绑定、相机、Control Rig、动画工具、玩法事件、Director 蓝图、导入导出、关键帧，以及动画混合器。MetaSound 基础、分页、性能、预设、配方、触发拓扑、工作流选择。另含电影渲染图与队列、Scene Capture 诊断、ML Deformer、Texture Graph。 |
+| UE 自带 · 引擎与平台 Markdown | — | 构建诊断、无界面运行、日志分析、体积裁剪及 6 个专题（测量、代码、内容、着色器、交付、验证）。另有 Wasm 部署、性能、纹理集。 |
+| UE 自带 · PCG Markdown | — | PCG 总览、调试、手动编辑、性能、低端设备、运行时生成配置与验证，包括 Landscape 和 MeshTerrain 两套分支。当前引擎的 MeshTerrain 配置条目是占位说明。 |
+| UE 5.9 宿主集成 | — | Canvas 扩展编写（`unrealcanvas-extension-author`）和画布技能按当前 Canvas 实际能力使用。Unreal Assistant 沿用编辑器技能注册表。[宿主说明](plugins/codex-unreal-engine-skills/skills/unreal-engine-workflows/references/canvas-assistant.md) |
+
+**完整逐项清单** · [5.8 和 5.9 共用的 21 项](plugins/codex-unreal-engine-skills/skills/unreal-engine-workflows/references/shared.csv) · [5.9 新增的 57 项](plugins/codex-unreal-engine-skills/skills/unreal-engine-workflows/references/ue5.9.csv)。5.9 合计 78 项。PCG 图生成的蓝图资产和原生父类合计一项，11 个 PCG C++ 类与它们读取的 Markdown 也各算一次。Canvas 技能库随安装和扩展变化，单独列出。
+
+在桌面本机会话里可以问“我的目标是 UE 5.8.4，请找到 Niagara 渲染器技能并读取指引”。插件先核对目标编辑器或其 `Engine/Build/Build.version`。编辑器在线时，通过 `ListSkills` 和 `GetSkills` 读取当前项目实际提供的完整正文。编辑器关闭时，仍可查阅随包指引，以及对应引擎安装中的 Python、Markdown 和 C++ 文本。蓝图资产与依赖项目动态生成的指引需要对应编辑器解析。仅指定版本也能读随包指引。[桌面查询方法与示例](plugins/codex-unreal-engine-skills/skills/unreal-engine-workflows/SKILL.md#desktop-lookup)
 
 ## 先看验证范围
 
 | 范围 | 结果 |
 | --- | --- |
-| Windows 本地源码安装，2026-11-26 | Codex CLI `0.171.0-alpha.13.2` 在空白配置中安装并启用 0.1.7，15 个安装文件均与源码一致。 |
-| UE 5.9 Preview | 2026-11-17 使用插件 0.1.6，以 `describe_tools` 查询参数后通过 `call_tool` 调用 `GetSelectedActors`，编辑器成功返回空列表。 |
-| UE 5.8.4 | 0.1.6 已对照引擎源码和配置核对工具名称、参数及配置节。编辑器只读调用仍待验证。 |
+| Windows 桌面安装包 | Codex CLI `0.171.0-alpha.13.2` 已在独立配置中安装并启用 0.1.8，安装文件与源码一致。 |
+| UE 5.8.4 | 已逐项核对 21 个源码位置。在临时空工程启动无界面 Commandlet，所选工具集提供 4 项技能。通过 MCP 的 `describe_toolset`、`ListSkills` 和 `GetSkills` 成功读取蓝图基础正文。 |
+| UE 5.9.0 | 已逐项核对 78 个源码位置。运行中的编辑器返回 87 个注册键，通过 `describe_tools` 和 `GetSkills` 实际读取蓝图基础、PCG 图生成蓝图资产及日志分析正文。该会话未列出 ML Deformer 和动画混合器。 |
 
 各版本的安装、连接设置和编辑器调用详情见[变更记录](Docs/CHANGELOG.md)。
 
@@ -102,7 +112,7 @@ MCP 服务键仍为 `unreal-mcp`，安装时注意避免无意同时启用两份
 
 明确要求编译或已经授权的编译可以在范围内执行。仅要求分析、修改或修复，
 不自动授权编译、Live Coding，以及间接触发编译的测试/脚本。
-该规则放在三个技能入口中。用户当前指令优先，已授权范围内不重复确认。
+引擎工作流也遵循相同的授权范围。已获授权的操作无需重复确认。
 
 ## 来源与差异
 

@@ -44,7 +44,7 @@ A good skill is:
 
 Work through these questions before writing anything.
 
-**1. Does the skill already exist?** Call `ListSkills` via MCP to see all registered skills in the project, then `GetSkills` on anything relevant. If the capability is already covered, point the user to the existing skill rather than creating a new one.
+**1. Does the skill already exist?** Check the [built-in catalog for the target engine](../unreal-engine-workflows/SKILL.md). In the connected project use `ListSkills` and `GetSkills` to include project-specific entries and read the resolved instructions before deciding whether a new skill is needed.
 
 **2. Choose the implementation path.** Check which formats the target engine loads.
 

@@ -2,9 +2,9 @@
 
 English | [简体中文](README.zh-CN.md)
 
-Use a local Codex session to inspect and edit a running Unreal Editor through MCP, or to author toolsets and Unreal Agent Skills. This is an unofficial adaptation of Epic Games' [Unreal Engine Skills for Claude Code](https://github.com/EpicGames/unreal-engine-skills-for-claude-code-plugin).
+Use a local Codex session to operate Unreal Editor through MCP, read the engine workflows for your project version, or author toolsets and Agent Skills. This unofficial plugin combines Epic’s Claude Code skills with desktop access to Unreal’s built-in workflows. [Epic’s GitHub project](https://github.com/EpicGames/unreal-engine-skills-for-claude-code-plugin)
 
-This checkout contains **0.1.7** of `codex-unreal-engine-skills`, based on Epic’s **3.1.2** at commit `0e27bde2b55c5d3f6948532f4296aaa3654d8f4b`.
+Version **0.1.8** supports **UE 5.8 and 5.9** in the same plugin. Its three GitHub-derived skills incorporate Epic’s **3.1.2** update.
 
 ## Install from GitHub
 
@@ -21,15 +21,24 @@ To follow an engine-specific maintenance branch, replace `main` with `5.8` or `5
 
 Use the tool catalog from the connected editor. UE 5.8 exposes `describe_toolset`. UE 5.9 Preview exposes `describe_toolsets` and `describe_tools`. When several editors are open, use distinct ports and verify the target project. See the [MCP skill](plugins/codex-unreal-engine-skills/skills/unreal-mcp/SKILL.md) and [setup guide](plugins/codex-unreal-engine-skills/skills/unreal-mcp/references/setup.md).
 
-## Included skills
+## Skills by source and engine version
 
-| Skill | Purpose |
-| --- | --- |
-| `unreal-mcp` | Discover and call live Unreal Editor tools. |
-| `create-toolset` | Author or extend C++/Python tools registered with ToolsetRegistry. |
-| `unreal-skill` | Create or maintain engine-side Agent Skills in a project or plugin. |
+One installation of `main` covers both series. The three GitHub skills are desktop entry points adapted from Epic's MIT-licensed Claude Code plugin. The fourth entry point, [`unreal-engine-workflows`](plugins/codex-unreal-engine-skills/skills/unreal-engine-workflows/SKILL.md), is maintained here. It brings workflows found in the engine into local desktop chats. Each catalog row includes the engine provider, source path and a short workflow that ships with the plugin. The table describes built-in skill coverage. A project can expose additional tools or skills.
 
-The adaptation adds desktop plugin and marketplace metadata, preserves the upstream authoring examples, and replaces the Bash SessionStart hook with task-scoped skill guidance. Unreal itself supplies the MCP server and editor tools.
+| Origin and workflow | UE 5.8 | UE 5.9 |
+| --- | --- | --- |
+| Epic GitHub · `unreal-mcp` (operate the editor), `create-toolset` (author MCP tools), `unreal-skill` (author engine skills) | All three. Use class/asset formats for engine skills. | All three. Engine-side Markdown skills are also supported. |
+| UE · editor foundations and Niagara | Blueprints, outdoor lighting, materials, skill authoring. Niagara fundamentals, Blueprint interaction, cleanup, custom HLSL, level placement, optimization and renderers. | Same 11 topics. |
+| UE · Dataflow, Chaos Cloth and PCG assets | Dataflow graph editing and cloth conversion. PCG graph generation, instant level operations, asset lineups, Biome Core setup and diagnosis, mesh instancing, mesh partition and shape grammar. | Same 10 topics. |
+| UE · additional editor and UI workflows | — | Actor placement, asset diff, source control, UMG basics, focus navigation, Editor Utility Widgets, runtime UI diagnosis, MVVM binding, Slate input, widget animation and widget documentation. |
+| UE · Sequencer, audio, rendering and deformation | — | Sequencer core, bindings, camera, Control Rig, animation tools, gameplay, Director Blueprint, import/export and keyframing. Animation Mixer, MetaSound fundamentals, pages, performance, presets, recipes, trigger topology and workflow selection. Movie Render Graph and Queue, Scene Capture diagnostics, ML Deformer and Texture Graph. |
+| UE · engine and platform Markdown | — | Build diagnosis, headless runs, log triage, build trimming and its six guides (measure, code, content, shaders, delivery, validate). Wasm deployment, performance and texture sets. |
+| UE · PCG Markdown | — | PCG overview, debug, manual edits, performance, low-end devices, runtime setup and validation, including Landscape and MeshTerrain variants. The MeshTerrain setup entry is a placeholder in the inspected build. |
+| UE 5.9 host integrations | — | Canvas extension authoring (`unrealcanvas-extension-author`) and canvas-scoped skills require the corresponding Canvas capabilities. Unreal Assistant uses the shared editor registry. [Host details](plugins/codex-unreal-engine-skills/skills/unreal-engine-workflows/references/canvas-assistant.md) |
+
+**Complete lists** · [21 shared built-in workflows](plugins/codex-unreal-engine-skills/skills/unreal-engine-workflows/references/shared.csv) · [57 additional built-in workflows for 5.9](plugins/codex-unreal-engine-skills/skills/unreal-engine-workflows/references/ue5.9.csv). UE 5.9 has 78 distinct catalog entries. A PCG asset and its native parent count once, as do the 11 Markdown files also exposed by PCG C++ classes. Canvas library entries depend on the installation and are counted separately.
+
+In a local desktop chat, try “For UE 5.8.4, find the built-in Niagara renderer skill and read its instructions.” The plugin identifies the target editor or its `Engine/Build/Build.version` before selecting a workflow. A running editor supplies resolved instructions through `ListSkills` and `GetSkills`, including project-specific skills. With the editor closed, desktop Codex can read the packaged workflow and the matching installation's Python, Markdown or C++ text. Blueprint assets and project-generated instructions need a matching editor for their resolved text. With only a stated version, the packaged workflow is available. [Desktop lookup and examples](plugins/codex-unreal-engine-skills/skills/unreal-engine-workflows/SKILL.md#desktop-lookup)
 
 ## Local installation and connection
 
@@ -53,9 +62,9 @@ An existing 0.1.1 installation retains its old identity and cached files. This s
 
 | Scope | Result |
 | --- | --- |
-| Windows installation from this checkout, 2026-11-26 | Codex CLI `0.171.0-alpha.13.2` installed and enabled 0.1.7 in a fresh profile. All 15 installed files matched the source. |
-| UE 5.9 Preview | On 2026-11-17, plugin 0.1.6 queried the live schema with `describe_tools` and called `GetSelectedActors` through `call_tool`. The editor returned an empty selection. |
-| UE 5.8.4 | Tool names, parameters and settings were checked against engine source and configuration for plugin 0.1.6. A live editor read is still pending. |
+| Windows desktop payload | Codex CLI `0.171.0-alpha.13.2` installed and enabled 0.1.8 in an isolated profile. The installed files matched the source. |
+| UE 5.8.4 | All 21 catalog source paths checked. An isolated headless editor commandlet exposed four skills with its selected toolsets. Over MCP, `describe_toolset`, `ListSkills` and `GetSkills` returned the Blueprint Basics instructions. |
+| UE 5.9.0 | All 78 catalog source paths checked. The running editor returned 87 registry keys. Through `describe_tools` and `GetSkills` we read the Blueprint Basics, PCG graph-generation asset and log-triage instructions. ML Deformer and Animation Mixer were absent from this session's list. |
 
 For detailed installation, settings and editor checks by version, see the [changelog](Docs/CHANGELOG.md).
 
@@ -66,7 +75,7 @@ For detailed installation, settings and editor checks by version, see the [chang
 | [`.agents/plugins/marketplace.json`](.agents/plugins/marketplace.json) | Local marketplace and plugin source path. |
 | [`plugins/codex-unreal-engine-skills/`](plugins/codex-unreal-engine-skills/) | Installable plugin root. |
 | [`plugin.json`](plugins/codex-unreal-engine-skills/plugin.json) | Plugin identity, version, and desktop metadata. |
-| [`skills/`](plugins/codex-unreal-engine-skills/skills/) | Three skills, metadata, and MCP references. |
+| [`skills/`](plugins/codex-unreal-engine-skills/skills/) | Four desktop skill entries, the versioned engine catalog and MCP references. |
 | [`UPSTREAM.md`](plugins/codex-unreal-engine-skills/UPSTREAM.md) | Upstream provenance and adaptation summary. |
 | [`VALIDATION.json`](VALIDATION.json) / [`upstream-changes.diff`](upstream-changes.diff) | Historical validation and skill diff prepared for 0.1.1. |
 | [AGENTS.md](AGENTS.md) / [Docs/CHANGELOG.md](Docs/CHANGELOG.md) | Maintenance conventions and verified change history. |

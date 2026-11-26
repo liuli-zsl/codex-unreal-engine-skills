@@ -1,8 +1,8 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "codex-unreal-engine-skills",
-  "version": "0.1.7",
-  "description": "Codex adaptation of Epic Games' Unreal MCP, toolset authoring, and Unreal Agent Skill workflows.",
+  "version": "0.1.8",
+  "description": "Operate Unreal Editor and read version-matched built-in UE 5.8 and 5.9 workflows from desktop Codex.",
   "author": {
     "name": "Unreal MCP desktop adaptation"
   },
@@ -19,7 +19,7 @@
       "interface": {
         "displayName": "Unreal Engine Skills for Codex",
         "shortDescription": "Use Epic's Unreal Engine skills in local Codex chats",
-        "longDescription": "Operate a local Unreal Editor, author ToolsetRegistry tools, and create Unreal Agent Skills. Adapted from Epic Games' MIT-licensed skills; not an official Epic Games or OpenAI distribution.",
+        "longDescription": "Operate a local Unreal Editor, look up built-in workflows for UE 5.8 or 5.9, and author toolsets and Agent Skills. This unofficial desktop integration adapts Epic Games' Claude Code skills and reads original engine definitions from the target installation or editor.",
         "developerName": "Desktop adaptation (Epic Games upstream)",
         "category": "Developer Tools",
         "capabilities": [
